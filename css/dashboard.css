@@ -1,0 +1,45 @@
+/* Dashboard */
+.dashboard-layout { display: grid; grid-template-columns: 260px 1fr; gap: 24px; align-items: start; }
+.dash-nav { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 12px; position: sticky; top: calc(var(--header-height) + 16px); }
+.dash-nav a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; color: var(--color-text); transition: background var(--transition), color var(--transition); }
+.dash-nav a:hover { background: var(--color-surface-alt); }
+.dash-nav a.active { background: var(--color-primary); color: #fff; }
+.dash-nav a svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.85; }
+.dash-nav .nav-sep { height: 1px; background: var(--color-border); margin: 10px 0; }
+
+.dash-main { min-width: 0; }
+.welcome-card { background: linear-gradient(135deg, var(--color-primary) 0%, #234a76 100%); color: #fff; border-radius: var(--radius-lg); padding: 28px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.welcome-card h2 { font-family: var(--font-display); font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+.welcome-card p { color: #cbd5e1; font-size: 14px; }
+.completion-ring { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(var(--color-accent) var(--pct, 72%), rgba(255,255,255,0.18) 0); flex-shrink: 0; }
+.completion-ring span { width: 66px; height: 66px; border-radius: 50%; background: var(--color-primary); display: grid; place-items: center; font-size: 15px; font-weight: 800; }
+
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 18px; }
+.stat-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.stat-card-icon { width: 36px; height: 36px; border-radius: var(--radius-sm); display: grid; place-items: center; background: var(--color-surface-alt); border: 1px solid var(--color-border); color: var(--color-primary); }
+.stat-card-icon svg { width: 18px; height: 18px; }
+.stat-card-value { font-size: 22px; font-weight: 800; color: var(--color-primary); }
+.stat-card-label { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-muted); }
+
+.quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.quick-card { display: flex; align-items: center; gap: 14px; padding: 18px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); transition: box-shadow var(--transition), transform var(--transition); }
+.quick-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.quick-card svg { width: 20px; height: 20px; color: var(--color-primary); }
+.quick-card strong { font-size: 14px; display: block; }
+.quick-card span { font-size: 12px; color: var(--color-text-muted); }
+
+.info-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 20px; }
+.info-box h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--color-primary); }
+.info-row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--color-border); font-size: 14px; }
+.info-row:last-child { border-bottom: none; }
+.info-row dt { color: var(--color-text-muted); font-weight: 500; }
+.info-row dd { font-weight: 600; color: var(--color-text); text-align: right; word-break: break-all; }
+
+@media (max-width: 900px) {
+  .dashboard-layout { grid-template-columns: 1fr; }
+  .dash-nav { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  .dash-nav a { flex: 1 1 auto; justify-content: center; min-width: 120px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .quick-grid { grid-template-columns: 1fr; }
+}

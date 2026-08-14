@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FEC Alumni Association - Connecting Faridpur Engineering College Graduates</title>
+<meta name="description" content="Official alumni association of Faridpur Engineering College. Connect with fellow graduates, explore events, and stay part of the FEC community.">
+<meta property="og:title" content="FEC Alumni Association">
+<meta property="og:description" content="Connecting FEC Alumni - Faridpur Engineering College">
+<meta property="og:type" content="website">
+<link rel="icon" href="fec_logo/fec_logo.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="index.html">
+      <img class="brand-logo" src="fec_logo/fec_logo.jpeg" alt="FEC Logo" onerror="this.src='fec_logo/fec_logo.jpg'">
+      <span class="brand-text">
+        <span class="brand-title">FEC Alumni</span>
+        <span class="brand-subtitle">Faridpur Engineering College</span>
+      </span>
+    </a>
+    <nav class="nav-desktop" aria-label="Primary">
+      <a href="index.html" class="active">Home</a>
+      <a href="about.html">About</a>
+      <a href="events.html">Events</a>
+      <a href="announcements.html">Announcements</a>
+      <a href="contact.html">Contact</a>
+      <a href="alumni.html" data-auth="approved-only" class="hidden">Directory</a>
+      <a href="dashboard.html" data-auth="approved-only" class="hidden">Dashboard</a>
+      <a href="admin/admin.html" data-auth="logged-in" class="hidden">Admin</a>
+    </nav>
+    <div class="header-actions">
+      <a class="btn btn-ghost btn-sm btn-desktop" href="login.html" data-auth="logged-out">Login</a>
+      <a class="btn btn-primary btn-sm btn-desktop" href="login.html" data-auth="logged-out">Join Alumni</a>
+      <a class="btn btn-outline btn-sm hidden" href="dashboard.html" data-auth="logged-in">Dashboard</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><span></span></button>
+    </div>
+  </div>
+  <nav class="nav-mobile" id="nav-mobile" aria-label="Mobile">
+    <a href="index.html" class="active">Home</a>
+    <a href="about.html">About</a>
+    <a href="events.html">Events</a>
+    <a href="announcements.html">Announcements</a>
+    <a href="contact.html">Contact</a>
+    <a href="alumni.html" data-auth="approved-only" class="hidden">Alumni Directory</a>
+    <a href="dashboard.html" data-auth="approved-only" class="hidden">Dashboard</a>
+    <a href="admin/admin.html" data-auth="logged-in" class="hidden">Admin</a>
+    <div class="mobile-actions" data-auth="logged-out">
+      <a class="btn btn-primary" href="login.html">Join the Alumni Association</a>
+      <a class="btn btn-outline" href="login.html">Alumni Login</a>
+    </div>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <div class="container hero-inner">
+    <div>
+      <div class="hero-kicker">Faridpur Engineering College</div>
+      <h1>Connecting <span>FEC Alumni</span> Across Generations</h1>
+      <p class="hero-desc">A lifelong community of engineers, innovators, and leaders. Reconnect with classmates, discover opportunities, and contribute to the future of your alma mater.</p>
+      <div class="hero-actions">
+        <a class="btn btn-accent btn-lg" href="login.html">Join the Alumni Association</a>
+        <a class="btn btn-outline btn-lg" href="login.html" style="background:rgba(255,255,255,0.10);color:#fff;border-color:rgba(255,255,255,0.35)">Alumni Login</a>
+      </div>
+      <div class="hero-stats">
+        <div><div class="stat-value">1,200+</div><div class="stat-label">Alumni Members</div></div>
+        <div><div class="stat-value">12+</div><div class="stat-label">Batches Connected</div></div>
+        <div><div class="stat-value">4</div><div class="stat-label">Departments</div></div>
+      </div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-card-head">
+        <div class="hero-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div><h3>Why Join?</h3><p>Verified alumni network</p></div>
+      </div>
+      <div class="hero-card-list">
+        <div class="hero-card-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg><div><strong>Alumni Directory</strong><span>Find classmates by batch, department, and city</span></div></div>
+        <div class="hero-card-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg><div><strong>Exclusive Events</strong><span>Reunions, workshops, and networking meetups</span></div></div>
+        <div class="hero-card-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg><div><strong>Career Opportunities</strong><span>Connect with alumni across industries</span></div></div>
+      </div>
+      <div style="margin-top:18px"><a class="btn btn-outline btn-block" href="about.html">Learn More About the Association</a></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-kicker">Who We Are</div>
+      <h2 class="section-title">About the Alumni Association</h2>
+      <p class="section-desc">The FEC Alumni Association exists to keep the bond between graduates and their alma mater alive — fostering mentorship, collaboration, and service to the next generation of engineers.</p>
+    </div>
+    <div class="cards-3">
+      <div class="card">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 22s8-5 8-11a8 8 0 1 0-16 0c0 6 8 11 8 11Z"/><circle cx="12" cy="11" r="3"/></svg></div>
+        <h3>Stay Connected</h3>
+        <p>Maintain ties with your batch, department, and the wider FEC family — wherever you are.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <h3>Give Back</h3>
+        <p>Mentor current students, share career guidance, and support institutional growth.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3h-8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2Z"/></svg></div>
+        <h3>Grow Together</h3>
+        <p>Access a trusted network for career opportunities, collaboration, and lifelong learning.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-kicker">Stay Informed</div>
+      <h2 class="section-title">Upcoming Events</h2>
+      <p class="section-desc">Reunions, workshops, and gatherings organized for the FEC community.</p>
+    </div>
+    <div class="cards-3" id="home-events"><div class="loading-wrap"><span class="spinner"></span> Loading events...</div></div>
+    <div class="text-center" style="margin-top:24px"><a class="btn btn-outline" href="events.html">View All Events</a></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-kicker">Latest News</div>
+      <h2 class="section-title">Announcements</h2>
+      <p class="section-desc">Official updates from the alumni association and college administration.</p>
+    </div>
+    <div class="cards-3" id="home-announcements"><div class="loading-wrap"><span class="spinner"></span> Loading announcements...</div></div>
+    <div class="text-center" style="margin-top:24px"><a class="btn btn-outline" href="announcements.html">View All Announcements</a></div>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="container">
+    <div class="highlight-grid">
+      <div>
+        <div class="section-kicker">Membership</div>
+        <h2 class="section-title" style="text-align:left">Why Join the Association?</h2>
+        <div class="highlight-list" style="margin-top:20px">
+          <div class="highlight-item"><div class="highlight-num">1</div><div><h4>Verified Alumni Network</h4><p>Every member is verified and approved by the administration. No fake profiles.</p></div></div>
+          <div class="highlight-item"><div class="highlight-num">2</div><div><h4>Privacy by Design</h4><p>Your contact information is never shown publicly. Only approved members see the directory.</p></div></div>
+          <div class="highlight-item"><div class="highlight-num">3</div><div><h4>Career and Mentorship</h4><p>Connect with seniors and juniors across batches and departments.</p></div></div>
+          <div class="highlight-item"><div class="highlight-num">4</div><div><h4>Institutional Updates</h4><p>Stay informed about college developments, events, and opportunities to contribute.</p></div></div>
+        </div>
+      </div>
+      <div class="card" style="padding:28px">
+        <h3 style="margin-bottom:12px">Membership at a Glance</h3>
+        <ul style="display:flex;flex-direction:column;gap:10px;font-size:14px;color:var(--color-text-muted)">
+          <li style="display:flex;gap:10px"><span style="color:var(--color-success);font-weight:700">—</span> Free to join for all FEC graduates</li>
+          <li style="display:flex;gap:10px"><span style="color:var(--color-success);font-weight:700">—</span> Google Sign-In — no passwords to remember</li>
+          <li style="display:flex;gap:10px"><span style="color:var(--color-success);font-weight:700">—</span> Administrator approval ensures authenticity</li>
+          <li style="display:flex;gap:10px"><span style="color:var(--color-success);font-weight:700">—</span> Edit your profile at any time</li>
+        </ul>
+        <div style="margin-top:18px"><a class="btn btn-primary btn-block" href="login.html">Register Now</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="cta">
+      <div>
+        <h2>Be Part of the FEC Legacy</h2>
+        <p>Join hundreds of alumni who stay connected, support each other, and shape the future together.</p>
+      </div>
+      <div class="cta-actions">
+        <a class="btn btn-accent btn-lg" href="login.html">Join Now</a>
+        <a class="btn btn-outline btn-lg" href="contact.html" style="color:#fff;border-color:rgba(255,255,255,0.4)">Contact Us</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">
+          <img src="fec_logo/fec_logo.jpeg" alt="FEC Logo" onerror="this.src='fec_logo/fec_logo.jpg'">
+          <span><strong>FEC Alumni Association</strong><span>Faridpur Engineering College</span></span>
+        </div>
+        <p class="footer-desc">The official alumni association of Faridpur Engineering College, committed to fostering lifelong connections among graduates.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Explore</h4>
+        <a href="about.html">About</a>
+        <a href="events.html">Events</a>
+        <a href="announcements.html">Announcements</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <div class="footer-col">
+        <h4>Members</h4>
+        <a href="login.html">Alumni Login</a>
+        <a href="login.html">Join Alumni</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="alumni.html">Directory</a>
+      </div>
+      <div class="footer-col">
+        <h4>Information</h4>
+        <a href="about.html">About FEC</a>
+        <a href="contact.html">Contact Office</a>
+        <a href="login.html">Privacy and Terms</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>Copyright 2026 FEC Alumni Association. All rights reserved.</span>
+      <span>Faridpur Engineering College, Faridpur, Bangladesh</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/events.js"></script>
+</body>
+</html>

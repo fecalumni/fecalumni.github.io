@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register - FEC Alumni Association</title>
+<meta name="description" content="Register for the FEC Alumni Association.">
+<link rel="icon" href="fec_logo/fec_logo.jpeg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="index.html"><img class="brand-logo" src="fec_logo/fec_logo.jpeg" alt="FEC Logo" onerror="this.src='fec_logo/fec_logo.jpg'"><span class="brand-text"><span class="brand-title">FEC Alumni</span><span class="brand-subtitle">Faridpur Engineering College</span></span></a>
+    <nav class="nav-desktop"><a href="index.html">Home</a><a href="about.html">About</a><a href="events.html">Events</a><a href="contact.html">Contact</a></nav>
+    <div class="header-actions"><a class="btn btn-outline btn-sm" href="login.html">Login</a><button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><span></span></button></div>
+  </div>
+  <nav class="nav-mobile" id="nav-mobile"><a href="index.html">Home</a><a href="about.html">About</a><a href="events.html">Events</a><a href="contact.html">Contact</a></nav>
+</header>
+
+<main class="auth-page" style="align-items:flex-start;padding-top:28px">
+  <div class="auth-card wide">
+    <div class="auth-head">
+      <img src="fec_logo/fec_logo.jpeg" alt="FEC Logo" onerror="this.src='fec_logo/fec_logo.jpg'">
+      <h1>Alumni Registration</h1>
+      <p>Complete your profile. Your Google account email will be used as your permanent identifier and cannot be changed.</p>
+    </div>
+
+    <div id="register-feedback"></div>
+
+    <form id="register-form" novalidate>
+      <div class="form-section">
+        <div class="form-section-title">Identity</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="reg-name">Full Name <span class="req">*</span></label>
+            <input class="form-input" id="reg-name" name="fullName" type="text" placeholder="Your full name" required>
+            <div class="form-error" id="err-fullName"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-email">Email (from Google) <span class="req">*</span></label>
+            <input class="form-input" id="reg-email" name="email" type="email" readonly required>
+            <div class="form-hint">Auto-filled from your Google account. Cannot be changed.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Academic Information</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="reg-batch">Batch <span class="req">*</span></label>
+            <input class="form-input" id="reg-batch" name="batch" type="text" placeholder="e.g., 2015" required>
+            <div class="form-error" id="err-batch"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-department">Department <span class="req">*</span></label>
+            <select class="form-select" id="reg-department" name="department" required><option value="">Select department</option></select>
+            <div class="form-error" id="err-department"></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="reg-graduationYear">Graduation Year <span class="req">*</span></label>
+            <select class="form-select" id="reg-graduationYear" name="graduationYear" required><option value="">Select year</option></select>
+            <div class="form-error" id="err-graduationYear"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-studentId">Student ID <span style="font-weight:400;color:var(--color-text-muted)">(optional)</span></label>
+            <input class="form-input" id="reg-studentId" name="studentId" type="text" placeholder="e.g., CSE-2015-012">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Professional and Contact</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="reg-phone">Phone Number <span class="req">*</span></label>
+            <input class="form-input" id="reg-phone" name="phone" type="tel" placeholder="+8801XXXXXXXXX" required>
+            <div class="form-error" id="err-phone"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-city">Current City <span class="req">*</span></label>
+            <input class="form-input" id="reg-city" name="city" type="text" placeholder="e.g., Dhaka" required>
+            <div class="form-error" id="err-city"></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="reg-profession">Current Profession <span class="req">*</span></label>
+            <input class="form-input" id="reg-profession" name="profession" type="text" placeholder="e.g., Software Engineer" required>
+            <div class="form-error" id="err-profession"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-organization">Current Organization <span class="req">*</span></label>
+            <input class="form-input" id="reg-organization" name="organization" type="text" placeholder="e.g., Grameenphone" required>
+            <div class="form-error" id="err-organization"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Online Presence (Optional)</div>
+        <div class="form-group">
+          <label class="form-label" for="reg-linkedIn">LinkedIn URL</label>
+          <input class="form-input" id="reg-linkedIn" name="linkedIn" type="url" placeholder="https://linkedin.com/in/yourprofile">
+          <div class="form-error" id="err-linkedIn"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="reg-website">Personal Website</label>
+            <input class="form-input" id="reg-website" name="website" type="url" placeholder="https://yourwebsite.com">
+            <div class="form-error" id="err-website"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-photo">Profile Photo URL</label>
+            <input class="form-input" id="reg-photo" name="profilePhoto" type="url" placeholder="https://...">
+            <div class="form-error" id="err-profilePhoto"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="reg-bio">Short Bio</label>
+          <textarea class="form-textarea" id="reg-bio" name="bio" placeholder="Briefly introduce yourself..."></textarea>
+          <div class="form-hint">A short paragraph about your interests or journey.</div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-lg btn-block" type="submit">Submit Registration</button>
+      <p class="text-center" style="font-size:13px;color:var(--color-text-muted);margin-top:10px">After submission, your application will be reviewed by the administrator. You will be notified once approved.</p>
+    </form>
+  </div>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/register.js"></script>
+</body>
+</html>

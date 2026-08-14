@@ -1,0 +1,34 @@
+/* Admin */
+.admin-layout { display: grid; grid-template-columns: 240px 1fr; gap: 24px; align-items: start; }
+.admin-nav { background: #0f2340; border-radius: var(--radius-md); padding: 14px; position: sticky; top: calc(var(--header-height) + 16px); }
+.admin-nav h4 { font-size: 11px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: #6b8bb3; margin: 14px 0 6px; }
+.admin-nav h4:first-child { margin-top: 4px; }
+.admin-nav a { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; color: #cbd5e1; transition: background var(--transition), color var(--transition); }
+.admin-nav a:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.admin-nav a.active { background: var(--color-accent); color: #fff; }
+.admin-nav a svg { width: 16px; height: 16px; }
+
+.admin-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 20px; }
+.admin-stat { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 16px; }
+.admin-stat-label { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 6px; }
+.admin-stat-value { font-size: 24px; font-weight: 800; color: var(--color-primary); line-height: 1; }
+.admin-stat.pending .admin-stat-value { color: var(--color-warning); }
+.admin-stat.approved .admin-stat-value { color: var(--color-success); }
+.admin-stat.rejected .admin-stat-value { color: var(--color-danger); }
+
+.admin-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 20px; margin-bottom: 20px; }
+.admin-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 14px; color: var(--color-primary); }
+
+.btn-approve { background: var(--color-success); color: #fff; border-color: var(--color-success); }
+.btn-approve:hover { background: #0f6b2e; }
+.btn-reject { background: var(--color-danger); color: #fff; border-color: var(--color-danger); }
+.btn-reject:hover { background: #991b1b; }
+
+@media (max-width: 1100px) { .admin-stats { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 800px) {
+  .admin-layout { grid-template-columns: 1fr; }
+  .admin-nav { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  .admin-nav h4 { display: none; }
+  .admin-nav a { flex: 1 1 auto; justify-content: center; }
+  .admin-stats { grid-template-columns: repeat(2, 1fr); }
+}

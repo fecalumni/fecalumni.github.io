@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact - FEC Alumni Association</title>
+<link rel="icon" href="fec_logo/fec_logo.jpeg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="index.html"><img class="brand-logo" src="fec_logo/fec_logo.jpeg" alt="FEC Logo" onerror="this.src='fec_logo/fec_logo.jpg'"><span class="brand-text"><span class="brand-title">FEC Alumni</span><span class="brand-subtitle">Faridpur Engineering College</span></span></a>
+    <nav class="nav-desktop"><a href="index.html">Home</a><a href="about.html">About</a><a href="events.html">Events</a><a href="contact.html" class="active">Contact</a></nav>
+    <div class="header-actions"><a class="btn btn-primary btn-sm" href="login.html">Join Alumni</a><button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><span></span></button></div>
+  </div>
+  <nav class="nav-mobile" id="nav-mobile"><a href="index.html">Home</a><a href="about.html">About</a><a href="events.html">Events</a><a href="contact.html" class="active">Contact</a></nav>
+</header>
+
+<div class="page-header"><div class="container"><h1>Contact Us</h1><p>Have a question about membership, events, or the alumni association? We would like to hear from you.</p></div></div>
+
+<div class="container" style="padding:32px var(--container-pad) 40px">
+  <div style="display:grid;grid-template-columns:1fr 380px;gap:28px;max-width:960px;margin:0 auto">
+    <div class="card" style="padding:24px">
+      <h2 style="font-size:16px;font-weight:700;margin-bottom:16px">Send a Message</h2>
+      <div id="contact-feedback"></div>
+      <form id="contact-form" novalidate>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Name <span class="req">*</span></label><input class="form-input" name="name" required placeholder="Your name"></div>
+          <div class="form-group"><label class="form-label">Email <span class="req">*</span></label><input class="form-input" name="email" type="email" required placeholder="you@example.com"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Subject <span class="req">*</span></label><input class="form-input" name="subject" required placeholder="How can we help?"></div>
+        <div class="form-group"><label class="form-label">Message <span class="req">*</span></label><textarea class="form-textarea" name="message" required placeholder="Your message..." style="min-height:120px"></textarea></div>
+        <button class="btn btn-primary btn-block" type="submit">Send Message</button>
+      </form>
+    </div>
+    <div>
+      <div class="card" style="padding:20px">
+        <h3>Alumni Office</h3>
+        <p style="font-size:14px;color:var(--color-text-muted);line-height:1.7;margin-top:8px">Faridpur Engineering College<br>Faridpur, Bangladesh</p>
+        <div style="margin-top:14px;font-size:14px;color:var(--color-text-muted)">
+          <div>Email: alumni@fec.edu.bd</div>
+          <div style="margin-top:4px">For membership inquiries, please include your batch and department.</div>
+        </div>
+      </div>
+      <div class="card" style="padding:20px;margin-top:16px">
+        <h3>Office Hours</h3>
+        <p style="font-size:14px;color:var(--color-text-muted);margin-top:8px">Sunday – Thursday: 9:00 AM – 4:00 PM<br>Friday – Saturday: Closed</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer"><div class="container"><div class="footer-bottom"><span>Copyright 2026 FEC Alumni Association.</span><span>Faridpur Engineering College</span></div></div></footer>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/contact.js"></script>
+</body>
+</html>

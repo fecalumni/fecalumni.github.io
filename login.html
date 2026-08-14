@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - FEC Alumni Association</title>
+<meta name="description" content="Login to the FEC Alumni Association portal with Google Sign-In.">
+<link rel="icon" href="fec_logo/fec_logo.jpeg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/auth.css">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="index.html"><img class="brand-logo" src="fec_logo/fec_logo.jpeg" alt="FEC Logo" onerror="this.src='fec_logo/fec_logo.jpg'"><span class="brand-text"><span class="brand-title">FEC Alumni</span><span class="brand-subtitle">Faridpur Engineering College</span></span></a>
+    <nav class="nav-desktop"><a href="index.html">Home</a><a href="about.html">About</a><a href="events.html">Events</a><a href="announcements.html">Announcements</a><a href="contact.html">Contact</a></nav>
+    <div class="header-actions"><a class="btn btn-outline btn-sm" href="index.html">Back to Home</a><button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><span></span></button></div>
+  </div>
+  <nav class="nav-mobile" id="nav-mobile"><a href="index.html">Home</a><a href="about.html">About</a><a href="events.html">Events</a><a href="announcements.html">Announcements</a><a href="contact.html">Contact</a></nav>
+</header>
+
+<main class="auth-page">
+  <div class="auth-card">
+    <div class="auth-head">
+      <img src="fec_logo/fec_logo.jpeg" alt="FEC Logo" onerror="this.src='fec_logo/fec_logo.jpg'">
+      <h1>Welcome Back</h1>
+      <p>Sign in with your Google account to access the alumni portal. Your email is your identity — no passwords needed.</p>
+    </div>
+
+    <div id="auth-feedback"></div>
+
+    <!-- Status message from query param -->
+    <div id="status-message" style="margin-bottom:16px"></div>
+
+    <div id="gsi-button" class="gsi-wrap"></div>
+    <p class="gsi-note text-center">By signing in, you agree to the alumni association terms. Only FEC graduates may register.</p>
+
+    <div id="demo-login" style="margin-top:18px;display:none">
+      <div class="auth-divider">Demo Access</div>
+      <p style="font-size:13px;color:var(--color-text-muted);text-align:center;margin-bottom:12px">Backend not configured — use demo access to preview the portal.</p>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary btn-block" id="btn-demo-approved">Enter as Approved Alumni</button>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:10px">
+        <button class="btn btn-outline btn-block" id="btn-demo-pending">Preview Pending State</button>
+      </div>
+    </div>
+
+    <div class="auth-footer">New to the association? Signing in will guide you to registration.</div>
+  </div>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/utils.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // Show status from query param
+  const reason = new URLSearchParams(location.search).get("reason");
+  const statusBox = document.getElementById("status-message");
+  if (reason) {
+    const map = {
+      Pending: ['Your membership application is awaiting approval.', 'warning'],
+      Rejected: ['Your membership application was not approved. Please contact the alumni office for assistance.', 'danger'],
+      Suspended: ['Your account is currently suspended. Please contact the administrator.', 'danger'],
+      NEW: ['', 'info']
+    };
+    const entry = map[reason];
+    if (entry && entry[0]) statusBox.innerHTML = `<div class="alert alert-${entry[1]}">${entry[0]}</div>`;
+  }
+  // If already logged in and approved, redirect
+  const user = Auth.getUser();
+  if (user && user.status === "Approved") {
+    // stay but offer dashboard link
+    statusBox.innerHTML += '<div class="alert alert-success" style="margin-top:10px">You are already signed in. <a href="dashboard.html">Go to Dashboard</a></div>';
+  }
+
+  // Init Google button
+  // Wait a tick for GSI script
+  function tryInit() {
+    if (typeof google !== "undefined" && google.accounts) {
+      Auth.initGoogleButton("gsi-button", Auth.handlePostGoogleSignIn);
+      // Demo fallback visibility
+      if (!isGoogleConfigured() || !isBackendConfigured()) {
+        document.getElementById("demo-login").style.display = "block";
+      }
+    } else setTimeout(tryInit, 300);
+  }
+  tryInit();
+  setTimeout(() => {
+    if (!isGoogleConfigured() || !isBackendConfigured()) document.getElementById("demo-login").style.display = "block";
+  }, 1200);
+
+  document.getElementById("btn-demo-approved")?.addEventListener("click", () => {
+    Auth.saveUser({ email: "demo.alumni@fec.edu.bd", name: "Demo Alumni", picture: "", status: "Approved", role: "Alumni" }, "demo-token");
+    location.href = "dashboard.html";
+  });
+  document.getElementById("btn-demo-pending")?.addEventListener("click", () => {
+    Auth.saveUser({ email: "pending.demo@fec.edu.bd", name: "Pending Applicant", picture: "", status: "Pending", role: "Alumni" }, "demo-token");
+    location.href = "login.html?reason=Pending";
+  });
+});
+</script>
+</body>
+</html>

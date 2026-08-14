@@ -1,0 +1,31 @@
+/* Auth pages - login / register */
+.auth-page { min-height: calc(100vh - var(--header-height)); display: flex; align-items: center; justify-content: center; padding: 32px var(--container-pad); background: var(--color-bg); }
+.auth-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); width: 100%; max-width: 480px; padding: 32px; }
+.auth-card.wide { max-width: 720px; }
+.auth-head { text-align: center; margin-bottom: 24px; }
+.auth-head img { width: 56px; height: 56px; object-fit: contain; margin: 0 auto 12px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-surface-alt); padding: 2px; }
+.auth-head h1 { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--color-primary); margin-bottom: 6px; }
+.auth-head p { font-size: 14px; color: var(--color-text-muted); line-height: 1.6; }
+.auth-divider { display: flex; align-items: center; gap: 12px; margin: 18px 0; color: var(--color-text-light); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--color-border); }
+
+.gsi-wrap { display: flex; justify-content: center; margin: 8px 0; }
+.gsi-fallback { text-align: center; }
+.gsi-note { font-size: 12px; color: var(--color-text-muted); margin-top: 10px; line-height: 1.5; }
+
+.status-card { text-align: center; padding: 32px 24px; }
+.status-icon { width: 56px; height: 56px; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+.status-icon svg { width: 28px; height: 28px; }
+.status-icon.pending { background: var(--color-warning-bg); color: var(--color-warning); border: 1px solid #fde68a; }
+.status-icon.approved { background: var(--color-success-bg); color: var(--color-success); border: 1px solid #bbf7d0; }
+.status-icon.rejected { background: var(--color-danger-bg); color: var(--color-danger); border: 1px solid #fecaca; }
+.status-card h2 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.status-card p { font-size: 14px; color: var(--color-text-muted); line-height: 1.65; max-width: 420px; margin: 0 auto 18px; }
+
+/* Register form sections */
+.form-section { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 20px; margin-bottom: 18px; background: var(--color-surface); }
+.form-section-title { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-primary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.form-section-title::before { content: ''; width: 3px; height: 16px; background: var(--color-accent); border-radius: 2px; }
+
+.auth-footer { text-align: center; margin-top: 18px; font-size: 13px; color: var(--color-text-muted); }
+.auth-footer a { font-weight: 600; }

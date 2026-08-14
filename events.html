@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Events - FEC Alumni Association</title>
+<link rel="icon" href="fec_logo/fec_logo.jpeg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="index.html"><img class="brand-logo" src="fec_logo/fec_logo.jpeg" alt="FEC Logo" onerror="this.src='fec_logo/fec_logo.jpg'"><span class="brand-text"><span class="brand-title">FEC Alumni</span><span class="brand-subtitle">Faridpur Engineering College</span></span></a>
+    <nav class="nav-desktop"><a href="index.html">Home</a><a href="about.html">About</a><a href="events.html" class="active">Events</a><a href="announcements.html">Announcements</a><a href="contact.html">Contact</a></nav>
+    <div class="header-actions"><a class="btn btn-outline btn-sm" href="login.html" data-auth="logged-out">Login</a><a class="btn btn-primary btn-sm" href="dashboard.html" data-auth="logged-in" class="hidden">Dashboard</a><button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><span></span></button></div>
+  </div>
+  <nav class="nav-mobile" id="nav-mobile"><a href="index.html">Home</a><a href="about.html">About</a><a href="events.html" class="active">Events</a><a href="announcements.html">Announcements</a><a href="contact.html">Contact</a></nav>
+</header>
+
+<div class="page-header"><div class="container"><h1>Events</h1><p>Reunions, workshops, and gatherings for the FEC alumni community.</p></div></div>
+<div class="container" style="padding:32px var(--container-pad) 40px">
+  <h2 style="font-size:18px;font-weight:700;margin-bottom:16px;color:var(--color-primary)">Upcoming Events</h2>
+  <div class="cards-3" id="events-upcoming"></div>
+  <h2 style="font-size:18px;font-weight:700;margin:36px 0 16px;color:var(--color-primary)">Past Events</h2>
+  <div class="cards-3" id="events-past"></div>
+</div>
+
+<footer class="site-footer"><div class="container"><div class="footer-bottom"><span>Copyright 2026 FEC Alumni Association.</span><span>Faridpur Engineering College</span></div></div></footer>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/events.js"></script>
+</body>
+</html>

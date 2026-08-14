@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alumni Directory - FEC Alumni Association</title>
+<link rel="icon" href="fec_logo/fec_logo.jpeg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/alumni.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="index.html"><img class="brand-logo" src="fec_logo/fec_logo.jpeg" alt="FEC Logo" onerror="this.src='fec_logo/fec_logo.jpg'"><span class="brand-text"><span class="brand-title">FEC Alumni</span><span class="brand-subtitle">Faridpur Engineering College</span></span></a>
+    <nav class="nav-desktop"><a href="index.html">Home</a><a href="dashboard.html">Dashboard</a><a href="alumni.html" class="active">Directory</a><a href="profile.html">My Profile</a><a href="events.html">Events</a></nav>
+    <div class="header-actions"><a class="btn btn-outline btn-sm" href="dashboard.html">Dashboard</a><button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><span></span></button></div>
+  </div>
+  <nav class="nav-mobile" id="nav-mobile"><a href="index.html">Home</a><a href="dashboard.html">Dashboard</a><a href="alumni.html" class="active">Directory</a><a href="profile.html">My Profile</a><a href="events.html">Events</a></nav>
+</header>
+
+<div class="page-header">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / <a href="dashboard.html">Dashboard</a> / Alumni Directory</div>
+    <h1>Alumni Directory</h1>
+    <p>Connect with fellow Faridpur Engineering College graduates. Only approved members are listed.</p>
+  </div>
+</div>
+
+<div class="container" style="padding:24px var(--container-pad) 40px">
+  <div class="directory-toolbar">
+    <label class="search-box" aria-label="Search alumni">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="alumni-search" type="search" placeholder="Search by name, profession, organization, city...">
+    </label>
+    <div class="filters">
+      <select id="filter-department"><option value="">All Departments</option></select>
+      <select id="filter-batch"><option value="">All Batches</option></select>
+      <select id="filter-city"><option value="">All Cities</option></select>
+    </div>
+  </div>
+  <div style="font-size:13px;color:var(--color-text-muted);margin-bottom:14px" id="alumni-count"></div>
+  <div class="alumni-grid" id="alumni-grid"></div>
+  <div class="pagination" id="alumni-pagination"></div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/alumni.js"></script>
+</body>
+</html>

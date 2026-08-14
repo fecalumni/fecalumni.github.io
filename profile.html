@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Profile - FEC Alumni Association</title>
+<link rel="icon" href="fec_logo/fec_logo.jpeg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/alumni.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="index.html"><img class="brand-logo" src="fec_logo/fec_logo.jpeg" alt="FEC Logo" onerror="this.src='fec_logo/fec_logo.jpg'"><span class="brand-text"><span class="brand-title">FEC Alumni</span><span class="brand-subtitle">Faridpur Engineering College</span></span></a>
+    <nav class="nav-desktop"><a href="index.html">Home</a><a href="dashboard.html">Dashboard</a><a href="alumni.html">Directory</a><a href="profile.html" class="active">My Profile</a></nav>
+    <div class="header-actions"><a class="btn btn-outline btn-sm" href="dashboard.html">Dashboard</a><button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><span></span></button></div>
+  </div>
+  <nav class="nav-mobile" id="nav-mobile"><a href="index.html">Home</a><a href="dashboard.html">Dashboard</a><a href="alumni.html">Directory</a><a href="profile.html" class="active">My Profile</a></nav>
+</header>
+
+<div class="container" style="padding:24px var(--container-pad) 40px;max-width:960px">
+  <div id="profile-view"><div class="loading-wrap"><span class="spinner spinner-lg"></span> Loading profile...</div></div>
+
+  <div id="profile-edit" class="hidden">
+    <h2 style="font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--color-primary);margin:20px 0 16px">Edit Profile</h2>
+    <div id="profile-feedback"></div>
+    <form id="profile-form" novalidate>
+      <div class="form-section">
+        <div class="form-section-title">Personal</div>
+        <div class="form-group"><label class="form-label">Full Name <span class="req">*</span></label><input class="form-input" name="fullName" required></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Batch</label><input class="form-input" name="batch"></div>
+          <div class="form-group"><label class="form-label">Department</label><select class="form-select" name="department"><option value="">Select</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Graduation Year</label><input class="form-input" name="graduationYear"></div>
+          <div class="form-group"><label class="form-label">Student ID</label><input class="form-input" name="studentId"></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">Professional</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Phone</label><input class="form-input" name="phone"></div>
+          <div class="form-group"><label class="form-label">City</label><input class="form-input" name="city"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Profession</label><input class="form-input" name="profession"></div>
+          <div class="form-group"><label class="form-label">Organization</label><input class="form-input" name="organization"></div>
+        </div>
+        <div class="form-group"><label class="form-label">LinkedIn URL</label><input class="form-input" name="linkedIn" type="url" placeholder="https://..."></div>
+        <div class="form-group"><label class="form-label">Website</label><input class="form-input" name="website" type="url" placeholder="https://..."></div>
+        <div class="form-group"><label class="form-label">Profile Photo URL</label><input class="form-input" name="profilePhoto" type="url" placeholder="https://..."></div>
+        <div class="form-group"><label class="form-label">Bio</label><textarea class="form-textarea" name="bio" placeholder="Tell us about yourself..."></textarea></div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary" type="submit">Save Changes</button>
+        <button class="btn btn-outline" type="button" id="btn-cancel-edit">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/profile.js"></script>
+</body>
+</html>
