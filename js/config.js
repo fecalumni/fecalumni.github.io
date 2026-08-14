@@ -18,15 +18,23 @@ const CONFIG = {
     TOKEN: "fec_id_token"
   },
 
-  // Departments offered at FEC
+  // Departments offered at FEC (Mechanical Engineering removed per alumni requirements)
   DEPARTMENTS: [
     "Civil Engineering",
     "Electrical and Electronic Engineering",
-    "Computer Science and Engineering",
-    "Mechanical Engineering"
+    "Computer Science and Engineering"
   ],
 
-  // Batches (adjust range as needed)
+  DEPARTMENT_CODES: {
+    "Civil Engineering": "CE",
+    "Electrical and Electronic Engineering": "EEE",
+    "Computer Science and Engineering": "CSE"
+  },
+
+  // Alumni batch numbers (zero-padded string, not year)
+  BATCHES: ["01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20"],
+
+  // Graduation year range
   BATCH_MIN: 2010,
   BATCH_MAX: 2026,
 

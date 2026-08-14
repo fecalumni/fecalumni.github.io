@@ -1,4 +1,4 @@
-/**
+﻿/**
  * FEC Alumni Association - Google Apps Script Backend
  *
  * Setup:
@@ -15,6 +15,9 @@
 const SPREADSHEET_ID = "1f66phpCYj2l62SHsc6jAAcCW4_kyDjlW3ISQxSDct2A";
 const GOOGLE_CLIENT_ID = "668916176652-hbb2eop8nr8g64ksh3jddbfakj1mf04m.apps.googleusercontent.com";
 const ALLOWED_STATUSES = ["Pending", "Approved", "Rejected", "Suspended"];
+const ALLOWED_DEPARTMENTS = ["Civil Engineering", "Electrical and Electronic Engineering", "Computer Science and Engineering"];
+const DEPARTMENT_CODES = { "Civil Engineering": "CE", "Electrical and Electronic Engineering": "EEE", "Computer Science and Engineering": "CSE" };
+const ALLOWED_BATCHES = ["01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20"];
 
 // Sheet names
 const SHEETS = {
@@ -35,13 +38,13 @@ const ALUMNI_COLS = { ID:1, FULLNAME:2, EMAIL:3, BATCH:4, DEPARTMENT:5, GRADUATI
 function doGet(e) {
   try {
     const action = (e.parameter.action || "").trim();
-    // Public operations only â€” no id_token in URL. Protected operations must use POST with id_token in body.
+    // Public operations only Ã¢â‚¬â€ no id_token in URL. Protected operations must use POST with id_token in body.
     const handlers = {
       getEvents: handleGetEvents,
       getAnnouncements: handleGetAnnouncements
     };
     if (handlers[action]) return handlers[action](e.parameter);
-    // Protected actions called via GET are rejected â€” use POST
+    // Protected actions called via GET are rejected Ã¢â‚¬â€ use POST
     const protectedActions = ["getUserByEmail","getApprovedAlumni","getAlumniProfile","getPendingRegistrations","getDashboardStats","isAdmin","approveAlumni","rejectAlumni","suspendAlumni","reactivateAlumni","createEvent","updateEvent","deleteEvent","createAnnouncement","updateAnnouncement","deleteAnnouncement","registerAlumni","updateAlumniProfile"];
     if (protectedActions.indexOf(action) !== -1) {
       return jsonResponse(false, "Use POST for authenticated requests. Token must not be in URL.", null, 405);
@@ -277,6 +280,16 @@ function isValidEmail(email) {
 function isValidUrl(url) {
   if (!url) return true; // optional fields
   return /^https?:\/\/.+/.test(url);
+}
+function isSafeUrlForSheet(url) {
+  if (!url || typeof url !== "string") return false;
+  var s = url.trim();
+  if (!s) return false;
+  var lower = s.toLowerCase();
+  if (lower.indexOf("javascript:") === 0 || lower.indexOf("data:") === 0 || lower.indexOf("vbscript:") === 0) return false;
+  if (!/^https:\/\//i.test(s)) return false;
+  if (/\s/.test(s)) return false;
+  return true;
 }
 
 function generateId(prefix) {
@@ -539,22 +552,43 @@ function handleRegisterAlumni(data) {
   const organization = sanitize(data.organization);
   const city = sanitize(data.city);
 
-  // Required validation
+  // Required validation - Batch is 01-20, Department without Mechanical, GraduationYear is year, StudentID optional but must match DEPT-BATCH-XXXX
   if (!fullName || fullName.length < 3) return jsonResponse(false, "Full name is required.", null);
-  if (!batch || !/^\d{4}$/.test(batch)) return jsonResponse(false, "Valid batch is required.", null);
-  if (!department) return jsonResponse(false, "Department is required.", null);
+  if (!batch || ALLOWED_BATCHES.indexOf(batch) === -1) return jsonResponse(false, "Valid batch is required. Select batch 01-20.", null);
+  if (!department || ALLOWED_DEPARTMENTS.indexOf(department) === -1) return jsonResponse(false, "Valid department is required.", null);
   if (!graduationYear || !/^\d{4}$/.test(graduationYear)) return jsonResponse(false, "Valid graduation year is required.", null);
+  if (parseInt(graduationYear, 10) < 2000 || parseInt(graduationYear, 10) > 2035) return jsonResponse(false, "Enter a valid graduation year.", null);
   if (!phone || !/^\+?[0-9\s\-()]{8,20}$/.test(phone)) return jsonResponse(false, "Valid phone number is required.", null);
   if (!profession) return jsonResponse(false, "Profession is required.", null);
   if (!organization) return jsonResponse(false, "Organization is required.", null);
   if (!city) return jsonResponse(false, "City is required.", null);
 
-  // Optional URL validation
-  if (data.linkedIn && sanitize(data.linkedIn) && !isValidUrl(sanitize(data.linkedIn))) return jsonResponse(false, "LinkedIn must be a valid URL.", null);
-  if (data.website && sanitize(data.website) && !isValidUrl(sanitize(data.website))) return jsonResponse(false, "Website must be a valid URL.", null);
-  if (data.profilePhoto && sanitize(data.profilePhoto) && !isValidUrl(sanitize(data.profilePhoto))) return jsonResponse(false, "Profile photo must be a valid URL.", null);
+  // Optional URL validation - only HTTPS
+  if (data.linkedIn && sanitize(data.linkedIn)) {
+    var li = sanitize(data.linkedIn);
+    if (!isSafeUrlForSheet(li)) return jsonResponse(false, "LinkedIn must be a valid HTTPS URL.", null);
+  }
+  if (data.website && sanitize(data.website)) {
+    var ws = sanitize(data.website);
+    if (!isSafeUrlForSheet(ws)) return jsonResponse(false, "Website must be a valid HTTPS URL.", null);
+  }
+  if (data.profilePhoto && sanitize(data.profilePhoto)) {
+    var pp = sanitize(data.profilePhoto);
+    if (!isSafeUrlForSheet(pp)) return jsonResponse(false, "Profile photo must be a valid HTTPS URL.", null);
+  }
+  // Student ID validation - optional, but if provided must be DEPTCODE-BATCH-XXXX and batch must match selected batch, dept code must match department
+  if (data.studentId && sanitize(data.studentId)) {
+    var sid = sanitize(data.studentId);
+    var deptCode = DEPARTMENT_CODES[department];
+    if (!deptCode) return jsonResponse(false, "Student ID must match the selected department and batch.", null);
+    var sidPattern = new RegExp("^" + deptCode + "-(0[1-9]|1[0-9]|20)-\\d{4}$");
+    var expectedPrefix = deptCode + "-" + batch + "-";
+    if (!sidPattern.test(sid) || sid.indexOf(expectedPrefix) !== 0) {
+      return jsonResponse(false, "Student ID must match the selected department and batch.", null);
+    }
+  }
 
-  // Duplicate check by verified email or sub â€” atomic with append
+  // Duplicate check by verified email or sub Ã¢â‚¬â€ atomic with append
   return withSheetLock(function() {
     if (findAlumniRowByEmail(email) || findAlumniRowBySub(googleSub)) return jsonResponse(false, "This Google account is already registered.", null);
     var sheet = getSheet(SHEETS.ALUMNI);
@@ -593,10 +627,32 @@ function handleUpdateAlumniProfile(data) {
   let updates = {};
   try { updates = typeof data.data === "string" ? JSON.parse(data.data) : (data.data || {}); } catch (e) { return jsonResponse(false, "Invalid data format.", null); }
 
-  // Validate URLs before acquiring lock (fail fast, minimize lock time)
-  if (updates.linkedIn && !isValidUrl(sanitize(updates.linkedIn))) return jsonResponse(false, "LinkedIn must be a valid URL.", null);
-  if (updates.website && !isValidUrl(sanitize(updates.website))) return jsonResponse(false, "Website must be a valid URL.", null);
-  if (updates.profilePhoto && !isValidUrl(sanitize(updates.profilePhoto))) return jsonResponse(false, "Profile photo must be a valid URL.", null);
+  // Validate URLs and academic fields before acquiring lock (fail fast, minimize lock time)
+  if (updates.linkedIn && !isSafeUrlForSheet(sanitize(updates.linkedIn))) return jsonResponse(false, "LinkedIn must be a valid HTTPS URL.", null);
+  if (updates.website && !isSafeUrlForSheet(sanitize(updates.website))) return jsonResponse(false, "Website must be a valid HTTPS URL.", null);
+  if (updates.profilePhoto && !isSafeUrlForSheet(sanitize(updates.profilePhoto))) return jsonResponse(false, "Profile photo must be a valid HTTPS URL.", null);
+  if (updates.batch !== undefined) {
+    var b = sanitize(updates.batch);
+    if (b && ALLOWED_BATCHES.indexOf(b) === -1) return jsonResponse(false, "Valid batch is required. Select batch 01-20.", null);
+  }
+  if (updates.department !== undefined) {
+    var dpt = sanitize(updates.department);
+    if (dpt && ALLOWED_DEPARTMENTS.indexOf(dpt) === -1) return jsonResponse(false, "Valid department is required.", null);
+  }
+  if (updates.studentId !== undefined && sanitize(updates.studentId)) {
+    var sid2 = sanitize(updates.studentId);
+    // Need to determine effective department/batch for validation (use updated values if provided, else existing)
+    var effDept = updates.department !== undefined ? sanitize(updates.department) : null;
+    var effBatch = updates.batch !== undefined ? sanitize(updates.batch) : null;
+    // If not in updates, use existing row values - will be checked inside lock with fresh read; for now do basic format check
+    var sidPat = /^(CE|EEE|CSE)-(0[1-9]|1[0-9]|20)-\d{4}$/;
+    if (!sidPat.test(sid2)) return jsonResponse(false, "Student ID must match the selected department and batch.", null);
+    // If both dept and batch are being updated, check prefix match immediately
+    if (effDept && effBatch) {
+      var codeTmp = DEPARTMENT_CODES[effDept];
+      if (!codeTmp || sid2.indexOf(codeTmp + "-" + effBatch + "-") !== 0) return jsonResponse(false, "Student ID must match the selected department and batch.", null);
+    }
+  }
 
   return withSheetLock(function() {
     var found = findAlumniRowByVerifiedPayload(payload);
@@ -610,6 +666,37 @@ function handleUpdateAlumniProfile(data) {
     var sheet = getSheet(SHEETS.ALUMNI);
     var rowIdx = found.index;
     var now = new Date().toISOString();
+    var values = sheet.getRange(rowIdx, 1, 1, ALUMNI_COLS.GOOGLE_SUB).getValues()[0];
+
+    // Re-validate Student ID against effective department/batch (including existing values if not being updated)
+    if (updates.studentId !== undefined && sanitize(updates.studentId)) {
+      var sidFinal = sanitize(updates.studentId);
+      var effDeptFinal = updates.department !== undefined ? sanitize(updates.department) : String(values[ALUMNI_COLS.DEPARTMENT - 1] || "").trim();
+      var effBatchFinal = updates.batch !== undefined ? sanitize(updates.batch) : String(values[ALUMNI_COLS.BATCH - 1] || "").trim();
+      var codeFinal = DEPARTMENT_CODES[effDeptFinal];
+      if (!codeFinal) return jsonResponse(false, "Student ID must match the selected department and batch.", null);
+      var patFinal = new RegExp("^" + codeFinal + "-(0[1-9]|1[0-9]|20)-\\d{4}$");
+      var expPrefFinal = codeFinal + "-" + effBatchFinal + "-";
+      if (!patFinal.test(sidFinal) || sidFinal.indexOf(expPrefFinal) !== 0) {
+        return jsonResponse(false, "Student ID must match the selected department and batch.", null);
+      }
+    }
+    // Also ensure if batch/department are updated, existing studentId (if any) still matches new values
+    if ((updates.batch !== undefined || updates.department !== undefined) && !updates.studentId && !updates.studentId) {
+      var existingSid2 = String(values[ALUMNI_COLS.STUDENT_ID - 1] || "").trim();
+      if (existingSid2) {
+        var effDept2 = updates.department !== undefined ? sanitize(updates.department) : String(values[ALUMNI_COLS.DEPARTMENT - 1] || "").trim();
+        var effBatch2 = updates.batch !== undefined ? sanitize(updates.batch) : String(values[ALUMNI_COLS.BATCH - 1] || "").trim();
+        var code2 = DEPARTMENT_CODES[effDept2];
+        if (code2) {
+          var pat2 = new RegExp("^" + code2 + "-(0[1-9]|1[0-9]|20)-\\d{4}$");
+          var pref2 = code2 + "-" + effBatch2 + "-";
+          if (!pat2.test(existingSid2) || existingSid2.indexOf(pref2) !== 0) {
+            return jsonResponse(false, "Existing Student ID does not match the new department/batch. Please update Student ID accordingly.", null);
+          }
+        }
+      }
+    }
 
     var allowed = {
       fullName: ALUMNI_COLS.FULLNAME,
@@ -626,13 +713,13 @@ function handleUpdateAlumniProfile(data) {
       profilePhoto: ALUMNI_COLS.PROFILE_PHOTO,
       bio: ALUMNI_COLS.BIO
     };
-    var values = sheet.getRange(rowIdx, 1, 1, ALUMNI_COLS.GOOGLE_SUB).getValues()[0];
+    var values2 = values;
     Object.keys(allowed).forEach(function(key) {
-      if (updates[key] !== undefined) values[allowed[key] - 1] = sanitize(updates[key]);
+      if (updates[key] !== undefined) values2[allowed[key] - 1] = sanitize(updates[key]);
     });
-    values[ALUMNI_COLS.UPDATED_AT - 1] = now;
-    if (!values[ALUMNI_COLS.GOOGLE_SUB - 1]) values[ALUMNI_COLS.GOOGLE_SUB - 1] = payload.sub;
-    sheet.getRange(rowIdx, 1, 1, values.length).setValues([values]);
+    values2[ALUMNI_COLS.UPDATED_AT - 1] = now;
+    if (!values2[ALUMNI_COLS.GOOGLE_SUB - 1]) values2[ALUMNI_COLS.GOOGLE_SUB - 1] = payload.sub;
+    sheet.getRange(rowIdx, 1, 1, values2.length).setValues([values2]);
 
     return jsonResponse(true, "Profile updated successfully.", null);
   });

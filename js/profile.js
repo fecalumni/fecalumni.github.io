@@ -1,5 +1,5 @@
 /**
- * Profile page logic
+ * Profile page logic - Batch 01-20, Department without Mechanical, Student ID DEPT-BATCH-SERIAL
  */
 document.addEventListener("DOMContentLoaded", async () => {
   if (typeof isProductionOrigin === "function" && isProductionOrigin() && (!isBackendConfigured() || !isGoogleConfigured())) {
@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function loadProfile() {
     try {
       if (!isBackendConfigured()) {
-        profile = { fullName: user.name || user.email, email: user.email, batch: "2015", department: "Computer Science and Engineering", graduationYear: "2019", phone: "+8801XXXXXXXXX", profession: "Software Engineer", organization: "Example Corp", city: "Dhaka", linkedIn: "", website: "", profilePhoto: user.picture || "", bio: "FEC alumnus. (Demo data — configure backend for real profile.)", status: user.status };
+        profile = { fullName: user.name || user.email, email: user.email, batch: "08", department: "Computer Science and Engineering", graduationYear: "2019", phone: "+8801XXXXXXXXX", profession: "Software Engineer", organization: "Example Corp", city: "Dhaka", linkedIn: "", website: "", profilePhoto: user.picture || "", bio: "FEC alumnus. (Demo data — configure backend for real profile.)", status: user.status };
         renderView(profile);
         return;
       }
@@ -112,17 +112,47 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("btn-edit-profile")?.addEventListener("click", () => openEdit(p));
   }
 
+  function getDeptCode(dept) {
+    if (typeof CONFIG !== "undefined" && CONFIG.DEPARTMENT_CODES && CONFIG.DEPARTMENT_CODES[dept]) return CONFIG.DEPARTMENT_CODES[dept];
+    var map = { "Civil Engineering": "CE", "Electrical and Electronic Engineering": "EEE", "Computer Science and Engineering": "CSE" };
+    return map[dept] || null;
+  }
+
   function openEdit(p) {
     viewMode.classList.add("hidden");
     editMode.classList.remove("hidden");
     // Populate form
     const form = document.getElementById("profile-form");
     if (!form) return;
-    // Departments
+    // Departments (without Mechanical)
     const deptSel = form.querySelector('[name="department"]');
-    if (deptSel && !deptSel.dataset.filled) {
-      CONFIG.DEPARTMENTS.forEach(d => { const o=document.createElement("option"); o.value=d; o.textContent=d; deptSel.appendChild(o); });
-      deptSel.dataset.filled="1";
+    if (deptSel) {
+      // Repopulate if not already or if contains Mechanical
+      var hasMechanical = Array.from(deptSel.options).some(o => o.value === "Mechanical Engineering");
+      if (!deptSel.dataset.filled || hasMechanical) {
+        deptSel.innerHTML = '<option value="">Select department</option>';
+        CONFIG.DEPARTMENTS.forEach(d => { const o=document.createElement("option"); o.value=d; o.textContent=d; deptSel.appendChild(o); });
+        deptSel.dataset.filled="1";
+      }
+    }
+    // Batch 01-20
+    const batchSel = form.querySelector('[name="batch"]');
+    if (batchSel) {
+      if (!batchSel.dataset.filled) {
+        batchSel.innerHTML = '<option value="">Select batch</option>';
+        var batches = (typeof CONFIG !== "undefined" && CONFIG.BATCHES) ? CONFIG.BATCHES : ["01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20"];
+        batches.forEach(b => { const o=document.createElement("option"); o.value=b; o.textContent=b; batchSel.appendChild(o); });
+        batchSel.dataset.filled="1";
+      }
+    }
+    // Graduation Year
+    const gradSel = form.querySelector('[name="graduationYear"]');
+    if (gradSel && !gradSel.dataset.filled) {
+      gradSel.innerHTML = '<option value="">Select year</option>';
+      for (let y = CONFIG.BATCH_MAX + 2; y >= CONFIG.BATCH_MIN; y--) {
+        const o=document.createElement("option"); o.value=String(y); o.textContent=String(y); gradSel.appendChild(o);
+      }
+      gradSel.dataset.filled="1";
     }
     form.querySelector('[name="fullName"]').value = p.fullName || "";
     form.querySelector('[name="batch"]').value = p.batch || "";
@@ -138,6 +168,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     form.querySelector('[name="profilePhoto"]').value = p.profilePhoto || "";
     form.querySelector('[name="bio"]').value = p.bio || "";
     feedback.innerHTML = "";
+
+    // Update Student ID placeholder based on current dept/batch
+    var studentIdInput = form.querySelector('[name="studentId"]');
+    function updatePlaceholder() {
+      var d = deptSel ? deptSel.value : "";
+      var b = batchSel ? batchSel.value : "";
+      if (d && b && /^(0[1-9]|1[0-9]|20)$/.test(b)) {
+        var code = getDeptCode(d);
+        if (code) studentIdInput.placeholder = "e.g., " + code + "-" + b + "-1001";
+      } else if (d) {
+        var code2 = getDeptCode(d);
+        if (code2) studentIdInput.placeholder = "e.g., " + code2 + "-01-1001";
+      }
+    }
+    if (deptSel) deptSel.addEventListener("change", updatePlaceholder);
+    if (batchSel) batchSel.addEventListener("change", updatePlaceholder);
+    updatePlaceholder();
   }
 
   document.getElementById("btn-cancel-edit")?.addEventListener("click", () => {
@@ -151,11 +198,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     const data = Object.fromEntries(new FormData(form).entries());
     Object.keys(data).forEach(k => data[k] = String(data[k]||"").trim());
     feedback.innerHTML = "";
-    // Basic validation - only HTTPS, reject javascript:/data:/vbscript:
+    // Validation - Batch 01-20, Department without Mechanical, Student ID DEPT-BATCH-XXXX
+    var validBatches = (typeof CONFIG !== "undefined" && CONFIG.BATCHES) ? CONFIG.BATCHES : ["01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20"];
+    var allowedDepts = (typeof CONFIG !== "undefined" && CONFIG.DEPARTMENTS) ? CONFIG.DEPARTMENTS : ["Civil Engineering","Electrical and Electronic Engineering","Computer Science and Engineering"];
     if (!data.fullName || data.fullName.length < 3) { feedback.innerHTML='<div class="alert alert-danger">Full name is required.</div>'; return; }
+    if (!data.batch || !validBatches.includes(data.batch)) { feedback.innerHTML='<div class="alert alert-danger">Batch is required. Select a valid batch (01-20).</div>'; return; }
+    if (!data.department || !allowedDepts.includes(data.department)) { feedback.innerHTML='<div class="alert alert-danger">Department is required. Select a valid department.</div>'; return; }
+    if (!data.graduationYear || !/^\d{4}$/.test(data.graduationYear)) { feedback.innerHTML='<div class="alert alert-danger">Graduation year is required.</div>'; return; }
     if (data.linkedIn && !isSafeHttpsUrl(data.linkedIn)) { feedback.innerHTML='<div class="alert alert-danger">LinkedIn must be a valid HTTPS URL.</div>'; return; }
     if (data.website && !isSafeHttpsUrl(data.website)) { feedback.innerHTML='<div class="alert alert-danger">Website must be a valid HTTPS URL.</div>'; return; }
     if (data.profilePhoto && !isSafeHttpsUrl(data.profilePhoto)) { feedback.innerHTML='<div class="alert alert-danger">Profile photo must be a valid HTTPS URL.</div>'; return; }
+    if (data.studentId && data.studentId.trim()) {
+      var sid = data.studentId.trim();
+      var deptCode = getDeptCode(data.department);
+      if (!deptCode) { feedback.innerHTML='<div class="alert alert-danger">Student ID must match the selected department and batch.</div>'; return; }
+      var pattern = new RegExp("^" + deptCode + "-(0[1-9]|1[0-9]|20)-\\d{4}$");
+      var expectedPrefix = deptCode + "-" + data.batch + "-";
+      if (!pattern.test(sid) || !sid.startsWith(expectedPrefix)) {
+        feedback.innerHTML='<div class="alert alert-danger">Student ID must match the selected department and batch.</div>'; return;
+      }
+    }
 
     const btn = form.querySelector('button[type="submit"]');
     const orig = btn.textContent; btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Saving...';

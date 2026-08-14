@@ -1,4 +1,4 @@
-/**
+﻿/**
  * FEC Alumni - API Client
  * Communicates with Google Apps Script Web App.
  * Sends verified Google ID token (id_token) over HTTPS for all protected requests.
@@ -31,14 +31,14 @@ const Api = (() => {
     }
     try {
       if (method === "GET") {
-        // Public GET only — never put id_token in URL
+        // Public GET only â€” never put id_token in URL
         const url = buildUrl({ action, ...data });
         const res = await fetch(url, { method: "GET" });
         const json = await res.json();
         if (!json.success) throw new Error(json.message || "Request failed");
         return json;
       } else {
-        // Protected POST — id_token in JSON body over HTTPS (never in URL). Backend verifies signature/iss/aud/exp/email_verified.
+        // Protected POST â€” id_token in JSON body over HTTPS (never in URL). Backend verifies signature/iss/aud/exp/email_verified.
         const token = data.id_token || data.idToken || getIdToken() || "";
         const dataWithToken = { ...data };
         if (token) {
@@ -140,12 +140,12 @@ const Api = (() => {
 
   // ---- Mock fallback for UI preview when backend not configured ----
   const MOCK_ALUMNI = [
-    { id: "FEC-ALU-00001", fullName: "Rahman Ahmed", batch: "2015", department: "Computer Science and Engineering", graduationYear: "2019", profession: "Software Engineer", organization: "Grameenphone", city: "Dhaka", linkedIn: "https://linkedin.com/in/example", profilePhoto: "", status: "Approved", bio: "Passionate about building impactful software." },
-    { id: "FEC-ALU-00002", fullName: "Fatima Khan", batch: "2014", department: "Civil Engineering", graduationYear: "2018", profession: "Site Engineer", organization: "Bangladesh Water Development Board", city: "Faridpur", linkedIn: "", profilePhoto: "", status: "Approved", bio: "Infrastructure enthusiast." },
-    { id: "FEC-ALU-00003", fullName: "Sajid Hossain", batch: "2016", department: "Electrical and Electronic Engineering", graduationYear: "2020", profession: "Electrical Engineer", organization: "DESCO", city: "Dhaka", linkedIn: "", profilePhoto: "", status: "Approved", bio: "" },
-    { id: "FEC-ALU-00004", fullName: "Nusrat Jahan", batch: "2017", department: "Computer Science and Engineering", graduationYear: "2021", profession: "Data Analyst", organization: "BRAC", city: "Dhaka", linkedIn: "", profilePhoto: "", status: "Approved", bio: "" },
-    { id: "FEC-ALU-00005", fullName: "Tanvir Alam", batch: "2013", department: "Mechanical Engineering", graduationYear: "2017", profession: "Mechanical Engineer", organization: "Walton", city: "Gazipur", linkedIn: "", profilePhoto: "", status: "Approved", bio: "" },
-    { id: "FEC-ALU-00006", fullName: "Aisha Sultana", batch: "2018", department: "Computer Science and Engineering", graduationYear: "2022", profession: "UI/UX Designer", organization: "Brain Station 23", city: "Dhaka", linkedIn: "", profilePhoto: "", status: "Approved", bio: "" }
+    { id: "FEC-ALU-00001", fullName: "Rahman Ahmed", batch: "05", department: "Computer Science and Engineering", graduationYear: "2019", profession: "Software Engineer", organization: "Grameenphone", city: "Dhaka", linkedIn: "https://linkedin.com/in/example", profilePhoto: "", status: "Approved", bio: "Passionate about building impactful software." },
+    { id: "FEC-ALU-00002", fullName: "Fatima Khan", batch: "04", department: "Civil Engineering", graduationYear: "2018", profession: "Site Engineer", organization: "Bangladesh Water Development Board", city: "Faridpur", linkedIn: "", profilePhoto: "", status: "Approved", bio: "Infrastructure enthusiast." },
+    { id: "FEC-ALU-00003", fullName: "Sajid Hossain", batch: "06", department: "Electrical and Electronic Engineering", graduationYear: "2020", profession: "Electrical Engineer", organization: "DESCO", city: "Dhaka", linkedIn: "", profilePhoto: "", status: "Approved", bio: "" },
+    { id: "FEC-ALU-00004", fullName: "Nusrat Jahan", batch: "07", department: "Computer Science and Engineering", graduationYear: "2021", profession: "Data Analyst", organization: "BRAC", city: "Dhaka", linkedIn: "", profilePhoto: "", status: "Approved", bio: "" },
+    { id: "FEC-ALU-00005", fullName: "Tanvir Alam", batch: "13", department: "Civil Engineering", graduationYear: "2017", profession: "Site Engineer", organization: "Walton", city: "Gazipur", linkedIn: "", profilePhoto: "", status: "Approved", bio: "" },
+    { id: "FEC-ALU-00006", fullName: "Aisha Sultana", batch: "08", department: "Computer Science and Engineering", graduationYear: "2022", profession: "UI/UX Designer", organization: "Brain Station 23", city: "Dhaka", linkedIn: "", profilePhoto: "", status: "Approved", bio: "" }
   ];
   const MOCK_EVENTS = [
     { id: "EVT-001", title: "Annual Alumni Reunion 2026", date: "2026-09-20", time: "10:00 AM", location: "FEC Campus, Faridpur", description: "Join us for the grand annual reunion of FEC alumni. Reconnect, reminisce, and rebuild networks.", status: "Upcoming", image: "" },
@@ -158,7 +158,7 @@ const Api = (() => {
   ];
 
   function handleMock(action) {
-    console.warn("[Api] Backend not configured — serving mock data for action:", action);
+    console.warn("[Api] Backend not configured â€” serving mock data for action:", action);
     switch (action) {
       case "getApprovedAlumni": return Promise.resolve({ success: true, data: MOCK_ALUMNI });
       case "getEvents": return Promise.resolve({ success: true, data: MOCK_EVENTS });
