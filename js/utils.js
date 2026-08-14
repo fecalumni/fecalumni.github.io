@@ -4,6 +4,23 @@
 function escapeHtml(str) {
   return String(str ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
+function isSafeHttpsUrl(url) {
+  if (!url || typeof url !== "string") return false;
+  var s = url.trim();
+  if (!s) return false;
+  var lower = s.toLowerCase();
+  if (lower.startsWith("javascript:") || lower.startsWith("data:") || lower.startsWith("vbscript:")) return false;
+  if (!/^https:\/\//i.test(s)) return false;
+  if (/\s/.test(s)) return false;
+  try {
+    var u = new URL(s);
+    if (u.protocol !== "https:") return false;
+    return true;
+  } catch { return false; }
+}
+function isProductionOrigin() {
+  try { return location.hostname === "fecalumni.github.io" || location.hostname.endsWith(".fecalumni.github.io"); } catch { return false; }
+}
 function showToast(message, type = "info") {
   let c = document.getElementById("toast-container");
   if (!c) { c = document.createElement("div"); c.id = "toast-container"; c.style.cssText = "position:fixed;bottom:20px;right:20px;z-index:300;display:flex;flex-direction:column;gap:10px;max-width:360px;"; document.body.appendChild(c); }

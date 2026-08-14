@@ -26,7 +26,7 @@ function renderEventList(container, items, emptyMsg) {
   if (!items.length) { container.innerHTML = `<div class="empty-state"><p>${escapeHtml(emptyMsg)}</p></div>`; return; }
   container.innerHTML = items.map(ev => `
     <div class="event-card">
-      <div class="event-card-img">${ev.image ? `<img src="${escapeHtml(ev.image)}" alt="${escapeHtml(ev.title)}" loading="lazy">` : `<span style="font-size:13px">No image</span>`}</div>
+      <div class="event-card-img">${isSafeHttpsUrl(ev.image) ? `<img src="${escapeHtml(ev.image)}" alt="${escapeHtml(ev.title)}" loading="lazy">` : `<span style="font-size:13px">No image</span>`}</div>
       <div class="event-card-body">
         <div class="event-meta">
           <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> ${escapeHtml(ev.date)}</span>
@@ -35,7 +35,7 @@ function renderEventList(container, items, emptyMsg) {
         </div>
         <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">${escapeHtml(ev.title)}</h3>
         <p style="font-size:13px;color:var(--color-text-muted);line-height:1.6">${escapeHtml(ev.description)}</p>
-        ${ev.registrationUrl ? `<div style="margin-top:12px"><a class="btn btn-primary btn-sm" href="${escapeHtml(ev.registrationUrl)}" target="_blank" rel="noopener">Register</a></div>` : ""}
+        ${isSafeHttpsUrl(ev.registrationUrl) ? `<div style="margin-top:12px"><a class="btn btn-primary btn-sm" href="${escapeHtml(ev.registrationUrl)}" target="_blank" rel="noopener">Register</a></div>` : ""}
       </div>
     </div>`).join("");
 }
@@ -50,7 +50,7 @@ async function loadAnnouncementsPage() {
     if (!items.length) { wrap.innerHTML = '<div class="empty-state"><p>No announcements yet.</p></div>'; return; }
     wrap.innerHTML = items.map(a => `
       <div class="announcement-card">
-        ${a.image ? `<div class="event-card-img"><img src="${escapeHtml(a.image)}" alt="${escapeHtml(a.title)}" loading="lazy"></div>` : ""}
+        ${isSafeHttpsUrl(a.image) ? `<div class="event-card-img"><img src="${escapeHtml(a.image)}" alt="${escapeHtml(a.title)}" loading="lazy"></div>` : ""}
         <div class="announcement-card-body">
           <div style="font-size:12px;color:var(--color-text-muted);margin-bottom:6px">${escapeHtml(a.date)} · ${escapeHtml(a.author)}</div>
           <h3 style="font-size:16px;font-weight:700;margin-bottom:8px">${escapeHtml(a.title)}</h3>

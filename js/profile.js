@@ -2,12 +2,33 @@
  * Profile page logic
  */
 document.addEventListener("DOMContentLoaded", async () => {
-  const user = Auth.requireAuth();
-  if (!user) return;
+  if (typeof isProductionOrigin === "function" && isProductionOrigin() && (!isBackendConfigured() || !isGoogleConfigured())) {
+    document.body.innerHTML = '<div class="container" style="padding:48px 24px"><div class="alert alert-danger">Service not configured. Please contact the administrator.</div></div>';
+    return;
+  }
+  const token = Auth.getToken();
+  const hintUser = Auth.getUser();
+  if (!token || !hintUser) { window.location.href = "login.html"; return; }
 
   const viewMode = document.getElementById("profile-view");
   const editMode = document.getElementById("profile-edit");
   const feedback = document.getElementById("profile-feedback");
+
+  // Treat sessionStorage as loading hint only — verify with backend before rendering shell
+  viewMode.innerHTML = '<div class="loading-wrap"><span class="spinner spinner-lg"></span> Verifying your session...</div>';
+  var session = await Auth.verifySessionWithBackend();
+  if (!session || session.error) {
+    if (session && session.error === "config") {
+      document.body.innerHTML = '<div class="container" style="padding:48px 24px"><div class="alert alert-danger">Service not configured. Please contact the administrator.</div></div>';
+      return;
+    }
+    window.location.href = "login.html";
+    return;
+  }
+  if (session.status === "NEW") { window.location.href = "register.html"; return; }
+  // For Pending/Rejected/Suspended, still allow viewing own profile but with badge; do not redirect away
+  const user = Auth.getUser();
+  if (!user) { window.location.href = "login.html"; return; }
 
   let profile = null;
 
@@ -51,7 +72,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function renderView(p) {
-    const hasPhoto = p.profilePhoto && /^https?:\/\//.test(p.profilePhoto);
+    const hasPhoto = isSafeHttpsUrl(p.profilePhoto);
     const avatarInner = hasPhoto ? `<img src="${escapeHtml(p.profilePhoto)}" alt="${escapeHtml(p.fullName)}">` : escapeHtml(initials(p.fullName));
     viewMode.innerHTML = `
       <div class="profile-header">
@@ -79,8 +100,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             <div class="info-row"><dt>Phone</dt><dd>${escapeHtml(p.phone||"—")}</dd></div>
             <div class="info-row"><dt>Email</dt><dd>${escapeHtml(p.email||"—")}</dd></div>
             <div class="info-row"><dt>Student ID</dt><dd>${escapeHtml(p.studentId||"—")}</dd></div>
-            ${p.linkedIn ? `<div class="info-row"><dt>LinkedIn</dt><dd><a href="${escapeHtml(p.linkedIn)}" target="_blank" rel="noopener">Open</a></dd></div>` : ""}
-            ${p.website ? `<div class="info-row"><dt>Website</dt><dd><a href="${escapeHtml(p.website)}" target="_blank" rel="noopener">Open</a></dd></div>` : ""}
+            ${isSafeHttpsUrl(p.linkedIn) ? `<div class="info-row"><dt>LinkedIn</dt><dd><a href="${escapeHtml(p.linkedIn)}" target="_blank" rel="noopener">Open</a></dd></div>` : ""}
+            ${isSafeHttpsUrl(p.website) ? `<div class="info-row"><dt>Website</dt><dd><a href="${escapeHtml(p.website)}" target="_blank" rel="noopener">Open</a></dd></div>` : ""}
           </dl>
         </div>
         <div class="info-box">
@@ -130,11 +151,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const data = Object.fromEntries(new FormData(form).entries());
     Object.keys(data).forEach(k => data[k] = String(data[k]||"").trim());
     feedback.innerHTML = "";
-    // Basic validation
+    // Basic validation - only HTTPS, reject javascript:/data:/vbscript:
     if (!data.fullName || data.fullName.length < 3) { feedback.innerHTML='<div class="alert alert-danger">Full name is required.</div>'; return; }
-    if (data.linkedIn && !/^https?:\/\//.test(data.linkedIn)) { feedback.innerHTML='<div class="alert alert-danger">LinkedIn must be a valid URL.</div>'; return; }
-    if (data.website && !/^https?:\/\//.test(data.website)) { feedback.innerHTML='<div class="alert alert-danger">Website must be a valid URL.</div>'; return; }
-    if (data.profilePhoto && !/^https?:\/\//.test(data.profilePhoto)) { feedback.innerHTML='<div class="alert alert-danger">Profile photo must be a valid URL.</div>'; return; }
+    if (data.linkedIn && !isSafeHttpsUrl(data.linkedIn)) { feedback.innerHTML='<div class="alert alert-danger">LinkedIn must be a valid HTTPS URL.</div>'; return; }
+    if (data.website && !isSafeHttpsUrl(data.website)) { feedback.innerHTML='<div class="alert alert-danger">Website must be a valid HTTPS URL.</div>'; return; }
+    if (data.profilePhoto && !isSafeHttpsUrl(data.profilePhoto)) { feedback.innerHTML='<div class="alert alert-danger">Profile photo must be a valid HTTPS URL.</div>'; return; }
 
     const btn = form.querySelector('button[type="submit"]');
     const orig = btn.textContent; btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Saving...';

@@ -13,6 +13,7 @@
 
 // ============ CONFIGURATION ============
 const SPREADSHEET_ID = "1f66phpCYj2l62SHsc6jAAcCW4_kyDjlW3ISQxSDct2A";
+const GOOGLE_CLIENT_ID = "668916176652-hbb2eop8nr8g64ksh3jddbfakj1mf04m.apps.googleusercontent.com";
 const ALLOWED_STATUSES = ["Pending", "Approved", "Rejected", "Suspended"];
 
 // Sheet names
@@ -26,25 +27,25 @@ const SHEETS = {
 };
 
 // Column maps (1-indexed) for Alumni sheet
-// A:ID B:FullName C:Email D:Batch E:Department F:GraduationYear G:StudentID H:Phone I:Profession J:Organization K:City L:LinkedIn M:Website N:ProfilePhoto O:Bio P:Status Q:Role R:CreatedAt S:UpdatedAt
-const ALUMNI_COLS = { ID:1, FULLNAME:2, EMAIL:3, BATCH:4, DEPARTMENT:5, GRADUATION_YEAR:6, STUDENT_ID:7, PHONE:8, PROFESSION:9, ORGANIZATION:10, CITY:11, LINKEDIN:12, WEBSITE:13, PROFILE_PHOTO:14, BIO:15, STATUS:16, ROLE:17, CREATED_AT:18, UPDATED_AT:19 };
+// A:ID B:FullName C:Email D:Batch E:Department F:GraduationYear G:StudentID H:Phone I:Profession J:Organization K:City L:LinkedIn M:Website N:ProfilePhoto O:Bio P:Status Q:Role R:CreatedAt S:UpdatedAt T:GoogleSub
+const ALUMNI_COLS = { ID:1, FULLNAME:2, EMAIL:3, BATCH:4, DEPARTMENT:5, GRADUATION_YEAR:6, STUDENT_ID:7, PHONE:8, PROFESSION:9, ORGANIZATION:10, CITY:11, LINKEDIN:12, WEBSITE:13, PROFILE_PHOTO:14, BIO:15, STATUS:16, ROLE:17, CREATED_AT:18, UPDATED_AT:19, GOOGLE_SUB:20 };
 
 // ============ ENTRY POINTS ============
 
 function doGet(e) {
   try {
     const action = (e.parameter.action || "").trim();
+    // Public operations only â€” no id_token in URL. Protected operations must use POST with id_token in body.
     const handlers = {
-      getUserByEmail: handleGetUserByEmail,
-      getApprovedAlumni: handleGetApprovedAlumni,
-      getAlumniProfile: handleGetAlumniProfile,
       getEvents: handleGetEvents,
-      getAnnouncements: handleGetAnnouncements,
-      getPendingRegistrations: handleGetPendingRegistrations,
-      getDashboardStats: handleGetDashboardStats,
-      isAdmin: handleIsAdmin
+      getAnnouncements: handleGetAnnouncements
     };
     if (handlers[action]) return handlers[action](e.parameter);
+    // Protected actions called via GET are rejected â€” use POST
+    const protectedActions = ["getUserByEmail","getApprovedAlumni","getAlumniProfile","getPendingRegistrations","getDashboardStats","isAdmin","approveAlumni","rejectAlumni","suspendAlumni","reactivateAlumni","createEvent","updateEvent","deleteEvent","createAnnouncement","updateAnnouncement","deleteAnnouncement","registerAlumni","updateAlumniProfile"];
+    if (protectedActions.indexOf(action) !== -1) {
+      return jsonResponse(false, "Use POST for authenticated requests. Token must not be in URL.", null, 405);
+    }
     return jsonResponse(false, "Unknown action: " + action, null, 400);
   } catch (err) {
     return jsonResponse(false, "Server error: " + err.message, null, 500);
@@ -59,6 +60,13 @@ function doPost(e) {
     }
     const action = (data.action || "").trim();
     const handlers = {
+      // Protected: id_token must be in POST body and is verified server-side
+      getUserByEmail: handleGetUserByEmail,
+      getApprovedAlumni: handleGetApprovedAlumni,
+      getAlumniProfile: handleGetAlumniProfile,
+      getPendingRegistrations: handleGetPendingRegistrations,
+      getDashboardStats: handleGetDashboardStats,
+      isAdmin: handleIsAdmin,
       registerAlumni: handleRegisterAlumni,
       updateAlumniProfile: handleUpdateAlumniProfile,
       approveAlumni: handleApproveAlumni,
@@ -66,15 +74,139 @@ function doPost(e) {
       suspendAlumni: handleSuspendAlumni,
       reactivateAlumni: handleReactivateAlumni,
       createEvent: handleCreateEvent,
+      updateEvent: handleUpdateEvent,
       deleteEvent: handleDeleteEvent,
       createAnnouncement: handleCreateAnnouncement,
+      updateAnnouncement: handleUpdateAnnouncement,
       deleteAnnouncement: handleDeleteAnnouncement,
-      submitContact: handleSubmitContact
+      submitContact: handleSubmitContact,
+      // Public also allowed via POST for flexibility
+      getEvents: handleGetEvents,
+      getAnnouncements: handleGetAnnouncements
     };
     if (handlers[action]) return handlers[action](data);
     return jsonResponse(false, "Unknown action: " + action, null, 400);
   } catch (err) {
     return jsonResponse(false, "Server error: " + err.message, null, 500);
+  }
+}
+
+// ============ ID TOKEN VERIFICATION (Google-recommended) ============
+
+/**
+ * Verifies a Google ID token using Google's tokeninfo endpoint.
+ * Checks signature (via Google), iss, aud, exp, email_verified.
+ * Uses short-lived CacheService keyed by SHA-256 hash of token, TTL bound to exp.
+ * Returns verified payload (sub, email, etc.) or throws.
+ */
+function verifyIdToken(idToken) {
+  if (!idToken || typeof idToken !== "string" || !idToken.trim()) {
+    throw new Error("Missing ID token. Please sign in again.");
+  }
+  var token = idToken.trim();
+  // Basic JWT structure check
+  if (token.split(".").length !== 3) throw new Error("Invalid ID token format.");
+
+  // Try CacheService (hash key, never raw token)
+  var cache = null;
+  var cacheKey = null;
+  try {
+    cache = CacheService.getScriptCache();
+    var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, token, Utilities.Charset.UTF_8);
+    var hashB64 = Utilities.base64Encode(digest);
+    // Safe key: prefix + URL-safe base64 without padding, truncated
+    cacheKey = "tok_v1_" + hashB64.replace(/[^A-Za-z0-9]/g, "").substring(0, 44);
+  } catch (e) { cache = null; cacheKey = null; }
+
+  if (cache && cacheKey) {
+    try {
+      var cached = cache.get(cacheKey);
+      if (cached) {
+        var cachedPayload = JSON.parse(cached);
+        var nowSec = Math.floor(new Date().getTime() / 1000);
+        var expSec = parseInt(cachedPayload.exp, 10);
+        // Re-validate critical claims on cache hit and ensure not beyond exp
+        if (cachedPayload && expSec && expSec > nowSec &&
+            cachedPayload.aud === GOOGLE_CLIENT_ID &&
+            (cachedPayload.iss === "accounts.google.com" || cachedPayload.iss === "https://accounts.google.com") &&
+            (cachedPayload.email_verified === "true" || cachedPayload.email_verified === true) &&
+            cachedPayload.email && cachedPayload.sub) {
+          return cachedPayload;
+        } else {
+          try { cache.remove(cacheKey); } catch (e2) {}
+        }
+      }
+    } catch (e) { /* cache miss or parse error */ }
+  }
+
+  var url = "https://oauth2.googleapis.com/tokeninfo?id_token=" + encodeURIComponent(token);
+  var resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true });
+  var code = resp.getResponseCode();
+  var body = resp.getContentText();
+  if (code !== 200) {
+    throw new Error("Token verification failed (HTTP " + code + "). Please sign in again.");
+  }
+  var payload;
+  try { payload = JSON.parse(body); } catch (err) { throw new Error("Invalid token response."); }
+  if (payload.error_description || payload.error) {
+    throw new Error("Token verification failed: " + (payload.error_description || payload.error));
+  }
+  // Verify aud
+  if (payload.aud !== GOOGLE_CLIENT_ID) throw new Error("Token audience mismatch.");
+  // Verify iss
+  if (payload.iss !== "accounts.google.com" && payload.iss !== "https://accounts.google.com") {
+    throw new Error("Token issuer mismatch.");
+  }
+  // Verify exp
+  var now = Math.floor(new Date().getTime() / 1000);
+  var exp = parseInt(payload.exp, 10);
+  if (!exp || exp <= now) throw new Error("Token expired. Please sign in again.");
+  // Verify email_verified
+  if (payload.email_verified !== "true" && payload.email_verified !== true) {
+    throw new Error("Email not verified by Google.");
+  }
+  if (!payload.email || !payload.sub) throw new Error("Token missing required claims.");
+
+  // Cache validated payload until exp (never beyond exp), TTL capped at 1 hour and 6h max
+  if (cache && cacheKey) {
+    try {
+      var ttl = exp - Math.floor(new Date().getTime() / 1000) - 5; // 5s safety margin
+      if (ttl > 0) {
+        if (ttl > 21600) ttl = 21600;
+        // Tokens are ~1h, cap at 3600 for safety
+        if (ttl > 3600) ttl = 3600;
+        cache.put(cacheKey, JSON.stringify(payload), ttl);
+      }
+    } catch (e) { /* cache put failure is non-fatal */ }
+  }
+
+  return payload; // contains sub, email, email_verified, aud, iss, exp, name, picture etc.
+}
+
+/**
+ * Extracts and verifies ID token from GET params or POST body.
+ * Looks for id_token or idToken field.
+ */
+function getVerifiedPayload(source) {
+  var token = null;
+  if (source) {
+    token = source.id_token || source.idToken || source.id_token_ || source.token || null;
+  }
+  return verifyIdToken(token);
+}
+
+function withSheetLock(fn) {
+  var lock = LockService.getScriptLock();
+  var locked = false;
+  try {
+    lock.waitLock(10000);
+    locked = true;
+    return fn();
+  } catch (e) {
+    if (e && e.message && e.message.indexOf("Server busy") !== -1) throw e;
+    throw new Error("Server busy. Please try again.");
+  } finally {
+    if (locked) try { lock.releaseLock(); } catch (e2) {}
   }
 }
 
@@ -86,13 +218,15 @@ function getSheet(name) {
   if (!sheet) {
     sheet = ss.insertSheet(name);
     initSheetHeaders(sheet, name);
+  } else if (name === SHEETS.ALUMNI) {
+    ensureAlumniSheetMigration(sheet);
   }
   return sheet;
 }
 
 function initSheetHeaders(sheet, name) {
   const headers = {
-    Alumni: ["ID","FullName","Email","Batch","Department","GraduationYear","StudentID","Phone","Profession","Organization","City","LinkedIn","Website","ProfilePhoto","Bio","Status","Role","CreatedAt","UpdatedAt"],
+    Alumni: ["ID","FullName","Email","Batch","Department","GraduationYear","StudentID","Phone","Profession","Organization","City","LinkedIn","Website","ProfilePhoto","Bio","Status","Role","CreatedAt","UpdatedAt","GoogleSub"],
     Admins: ["Email","Name","Role","Status"],
     Events: ["ID","Title","Date","Time","Location","Description","Image","RegistrationUrl","Status","CreatedAt"],
     Announcements: ["ID","Title","Content","Date","Author","Image","Status","CreatedAt"],
@@ -101,6 +235,29 @@ function initSheetHeaders(sheet, name) {
   };
   const h = headers[name];
   if (h) sheet.getRange(1, 1, 1, h.length).setValues([h]).setFontWeight("bold").setBackground("#1a3a5c").setFontColor("#ffffff");
+}
+
+/**
+ * Migrates existing Alumni sheet to include GoogleSub column if missing.
+ * Existing rows keep their data; header row is extended.
+ */
+function ensureAlumniSheetMigration(sheet) {
+  var lastCol = sheet.getLastColumn();
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  var hasGoogleSub = false;
+  for (var i = 0; i < headers.length; i++) {
+    if (String(headers[i]).toLowerCase() === "googlesub") { hasGoogleSub = true; break; }
+  }
+  if (!hasGoogleSub) {
+    // Extend header row to include GoogleSub as column T (20)
+    // If lastCol < 20, pad and set
+    if (lastCol < ALUMNI_COLS.GOOGLE_SUB) {
+      sheet.getRange(1, ALUMNI_COLS.GOOGLE_SUB).setValue("GoogleSub").setFontWeight("bold").setBackground("#1a3a5c").setFontColor("#ffffff");
+    } else {
+      // Header exists but named differently - ensure correct name
+      sheet.getRange(1, ALUMNI_COLS.GOOGLE_SUB).setValue("GoogleSub").setFontWeight("bold").setBackground("#1a3a5c").setFontColor("#ffffff");
+    }
+  }
 }
 
 function jsonResponse(success, message, data, code) {
@@ -152,7 +309,8 @@ function rowToAlumni(row) {
     status: row[15] || "Pending",
     role: row[16] || "Alumni",
     createdAt: row[17] || "",
-    updatedAt: row[18] || ""
+    updatedAt: row[18] || "",
+    googleSub: row[19] || ""
   };
 }
 
@@ -196,6 +354,25 @@ function findAlumniRowByEmail(email) {
   return null;
 }
 
+function findAlumniRowBySub(sub) {
+  if (!sub) return null;
+  const sheet = getSheet(SHEETS.ALUMNI);
+  const values = sheet.getDataRange().getValues();
+  for (let i = 1; i < values.length; i++) {
+    if (String(values[i][ALUMNI_COLS.GOOGLE_SUB - 1]).trim() === String(sub).trim()) {
+      return { index: i + 1, row: values[i] };
+    }
+  }
+  return null;
+}
+
+function findAlumniRowByVerifiedPayload(payload) {
+  // Prefer stable Google sub, fallback to email for migration
+  var bySub = findAlumniRowBySub(payload.sub);
+  if (bySub) return bySub;
+  return findAlumniRowByEmail(payload.email);
+}
+
 function findAlumniRowById(id) {
   const sheet = getSheet(SHEETS.ALUMNI);
   const values = sheet.getDataRange().getValues();
@@ -207,18 +384,55 @@ function findAlumniRowById(id) {
   return null;
 }
 
+function ensureGoogleSubStored(found, payload) {
+  if (!found || !payload || !payload.sub) return;
+  var currentSub = String(found.row[ALUMNI_COLS.GOOGLE_SUB - 1] || "").trim();
+  if (!currentSub) {
+    // Use lock for this migration write to avoid concurrent overwrite
+    try {
+      withSheetLock(function() {
+        // Re-read to avoid stale found.row if another request already wrote
+        var sheet = getSheet(SHEETS.ALUMNI);
+        var fresh = sheet.getRange(found.index, ALUMNI_COLS.GOOGLE_SUB).getValue();
+        if (!String(fresh || "").trim()) {
+          sheet.getRange(found.index, ALUMNI_COLS.GOOGLE_SUB).setValue(payload.sub);
+          sheet.getRange(found.index, ALUMNI_COLS.UPDATED_AT).setValue(new Date().toISOString());
+        }
+        found.row[ALUMNI_COLS.GOOGLE_SUB - 1] = payload.sub;
+        return true;
+      });
+    } catch (e) {
+      // Fallback: direct write if lock fails (best effort, same value)
+      try {
+        var sheet2 = getSheet(SHEETS.ALUMNI);
+        sheet2.getRange(found.index, ALUMNI_COLS.GOOGLE_SUB).setValue(payload.sub);
+        sheet2.getRange(found.index, ALUMNI_COLS.UPDATED_AT).setValue(new Date().toISOString());
+        found.row[ALUMNI_COLS.GOOGLE_SUB - 1] = payload.sub;
+      } catch (e2) {}
+    }
+  }
+}
+
 // ============ HANDLERS: GET ============
 
 function handleGetUserByEmail(params) {
-  const email = sanitize(params.email);
-  if (!email || !isValidEmail(email)) return jsonResponse(false, "Valid email is required.", null);
-  const found = findAlumniRowByEmail(email);
+  var payload;
+  try { payload = getVerifiedPayload(params); } catch (e) { return jsonResponse(false, e.message, null, 401); }
+  var found = findAlumniRowByVerifiedPayload(payload);
   if (!found) return jsonResponse(true, "Not found", null);
-  const a = rowToAlumni(found.row);
+  ensureGoogleSubStored(found, payload);
+  var a = rowToAlumni(found.row);
   return jsonResponse(true, "Found", a);
 }
 
 function handleGetApprovedAlumni(params) {
+  var payload;
+  try { payload = getVerifiedPayload(params); } catch (e) { return jsonResponse(false, e.message, null, 401); }
+  var requester = findAlumniRowByVerifiedPayload(payload);
+  if (!requester) return jsonResponse(false, "No alumni record found for this account. Please register first.", null, 403);
+  var requesterData = rowToAlumni(requester.row);
+  if (requesterData.status !== "Approved") return jsonResponse(false, "Access denied. Your membership status is: " + requesterData.status, null, 403);
+  ensureGoogleSubStored(requester, payload);
   const sheet = getSheet(SHEETS.ALUMNI);
   const values = sheet.getDataRange().getValues();
   const result = [];
@@ -230,15 +444,17 @@ function handleGetApprovedAlumni(params) {
 }
 
 function handleGetAlumniProfile(params) {
-  const email = sanitize(params.email);
-  if (!email || !isValidEmail(email)) return jsonResponse(false, "Valid email is required.", null);
-  const found = findAlumniRowByEmail(email);
-  if (!found) return jsonResponse(false, "Profile not found.", null);
-  const a = rowToAlumni(found.row);
+  var payload;
+  try { payload = getVerifiedPayload(params); } catch (e) { return jsonResponse(false, e.message, null, 401); }
+  var found = findAlumniRowByVerifiedPayload(payload);
+  if (!found) return jsonResponse(false, "Profile not found.", null, 404);
+  ensureGoogleSubStored(found, payload);
+  var a = rowToAlumni(found.row);
   return jsonResponse(true, "OK", a);
 }
 
-function handleGetEvents(/* params */) {
+function handleGetEvents(params) {
+  // Public - no auth required
   const sheet = getSheet(SHEETS.EVENTS);
   const values = sheet.getDataRange().getValues();
   const result = [];
@@ -252,7 +468,8 @@ function handleGetEvents(/* params */) {
   return jsonResponse(true, "OK", result);
 }
 
-function handleGetAnnouncements(/* params */) {
+function handleGetAnnouncements(params) {
+  // Public - no auth required
   const sheet = getSheet(SHEETS.ANNOUNCEMENTS);
   const values = sheet.getDataRange().getValues();
   const result = [];
@@ -266,8 +483,9 @@ function handleGetAnnouncements(/* params */) {
 }
 
 function handleGetPendingRegistrations(params) {
-  const adminEmail = sanitize(params.adminEmail);
-  if (!checkIsAdmin(adminEmail)) return jsonResponse(false, "Unauthorized. Admin privileges required.", null, 403);
+  var payload;
+  try { payload = getVerifiedPayload(params); } catch (e) { return jsonResponse(false, e.message, null, 401); }
+  if (!checkIsAdmin(payload.email)) return jsonResponse(false, "Unauthorized. Admin privileges required.", null, 403);
   const sheet = getSheet(SHEETS.ALUMNI);
   const values = sheet.getDataRange().getValues();
   const result = [];
@@ -279,8 +497,9 @@ function handleGetPendingRegistrations(params) {
 }
 
 function handleGetDashboardStats(params) {
-  const adminEmail = sanitize(params.adminEmail);
-  if (!checkIsAdmin(adminEmail)) return jsonResponse(false, "Unauthorized.", null, 403);
+  var payload;
+  try { payload = getVerifiedPayload(params); } catch (e) { return jsonResponse(false, e.message, null, 401); }
+  if (!checkIsAdmin(payload.email)) return jsonResponse(false, "Unauthorized.", null, 403);
   const sheet = getSheet(SHEETS.ALUMNI);
   const values = sheet.getDataRange().getValues();
   let total = 0, pending = 0, approved = 0, rejected = 0, suspended = 0;
@@ -297,15 +516,20 @@ function handleGetDashboardStats(params) {
 }
 
 function handleIsAdmin(params) {
-  const email = sanitize(params.email);
-  const isAdmin = checkIsAdmin(email);
-  return jsonResponse(true, "OK", { isAdmin: isAdmin });
+  var payload;
+  try { payload = getVerifiedPayload(params); } catch (e) { return jsonResponse(false, e.message, null, 401); }
+  var isAdmin = checkIsAdmin(payload.email);
+  return jsonResponse(true, "OK", { isAdmin: isAdmin, email: payload.email, sub: payload.sub });
 }
 
 // ============ HANDLERS: POST ============
 
 function handleRegisterAlumni(data) {
-  const email = sanitize(data.email);
+  var payload;
+  try { payload = getVerifiedPayload(data); } catch (e) { return jsonResponse(false, e.message, null, 401); }
+  // Use verified identity, not client-supplied email
+  const email = payload.email;
+  const googleSub = payload.sub;
   const fullName = sanitize(data.fullName);
   const batch = sanitize(data.batch);
   const department = sanitize(data.department);
@@ -316,7 +540,6 @@ function handleRegisterAlumni(data) {
   const city = sanitize(data.city);
 
   // Required validation
-  if (!email || !isValidEmail(email)) return jsonResponse(false, "Valid email is required.", null);
   if (!fullName || fullName.length < 3) return jsonResponse(false, "Full name is required.", null);
   if (!batch || !/^\d{4}$/.test(batch)) return jsonResponse(false, "Valid batch is required.", null);
   if (!department) return jsonResponse(false, "Department is required.", null);
@@ -331,80 +554,88 @@ function handleRegisterAlumni(data) {
   if (data.website && sanitize(data.website) && !isValidUrl(sanitize(data.website))) return jsonResponse(false, "Website must be a valid URL.", null);
   if (data.profilePhoto && sanitize(data.profilePhoto) && !isValidUrl(sanitize(data.profilePhoto))) return jsonResponse(false, "Profile photo must be a valid URL.", null);
 
-  // Duplicate check
-  if (findAlumniRowByEmail(email)) return jsonResponse(false, "This email is already registered.", null);
-
-  const sheet = getSheet(SHEETS.ALUMNI);
-  const id = generateId("ALU");
-  const now = new Date().toISOString();
-  const row = [
-    id,
-    fullName,
-    email,
-    batch,
-    department,
-    graduationYear,
-    sanitize(data.studentId),
-    phone,
-    profession,
-    organization,
-    city,
-    sanitize(data.linkedIn),
-    sanitize(data.website),
-    sanitize(data.profilePhoto),
-    sanitize(data.bio),
-    "Pending",
-    "Alumni",
-    now,
-    now
-  ];
-  sheet.appendRow(row);
-  return jsonResponse(true, "Registration submitted successfully. Awaiting administrator approval.", { id: id, status: "Pending" });
+  // Duplicate check by verified email or sub â€” atomic with append
+  return withSheetLock(function() {
+    if (findAlumniRowByEmail(email) || findAlumniRowBySub(googleSub)) return jsonResponse(false, "This Google account is already registered.", null);
+    var sheet = getSheet(SHEETS.ALUMNI);
+    var id = generateId("ALU");
+    var now = new Date().toISOString();
+    var row = [
+      id,
+      fullName,
+      email,
+      batch,
+      department,
+      graduationYear,
+      sanitize(data.studentId),
+      phone,
+      profession,
+      organization,
+      city,
+      sanitize(data.linkedIn),
+      sanitize(data.website),
+      sanitize(data.profilePhoto),
+      sanitize(data.bio),
+      "Pending",
+      "Alumni",
+      now,
+      now,
+      googleSub
+    ];
+    sheet.appendRow(row);
+    return jsonResponse(true, "Registration submitted successfully. Awaiting administrator approval.", { id: id, status: "Pending" });
+  });
 }
 
 function handleUpdateAlumniProfile(data) {
-  const email = sanitize(data.email);
+  var payload;
+  try { payload = getVerifiedPayload(data); } catch (e) { return jsonResponse(false, e.message, null, 401); }
   let updates = {};
   try { updates = typeof data.data === "string" ? JSON.parse(data.data) : (data.data || {}); } catch (e) { return jsonResponse(false, "Invalid data format.", null); }
 
-  if (!email || !isValidEmail(email)) return jsonResponse(false, "Valid email is required.", null);
-
-  const found = findAlumniRowByEmail(email);
-  if (!found) return jsonResponse(false, "Profile not found.", null);
-
-  // Validate URLs if provided
+  // Validate URLs before acquiring lock (fail fast, minimize lock time)
   if (updates.linkedIn && !isValidUrl(sanitize(updates.linkedIn))) return jsonResponse(false, "LinkedIn must be a valid URL.", null);
   if (updates.website && !isValidUrl(sanitize(updates.website))) return jsonResponse(false, "Website must be a valid URL.", null);
   if (updates.profilePhoto && !isValidUrl(sanitize(updates.profilePhoto))) return jsonResponse(false, "Profile photo must be a valid URL.", null);
 
-  const sheet = getSheet(SHEETS.ALUMNI);
-  const rowIdx = found.index;
-  const now = new Date().toISOString();
+  return withSheetLock(function() {
+    var found = findAlumniRowByVerifiedPayload(payload);
+    if (!found) return jsonResponse(false, "Profile not found.", null);
+    // Backfill GoogleSub atomically inside lock
+    var curSub = String(found.row[ALUMNI_COLS.GOOGLE_SUB - 1] || "").trim();
+    if (!curSub && payload.sub) {
+      found.row[ALUMNI_COLS.GOOGLE_SUB - 1] = payload.sub;
+    }
 
-  // Map updates to columns - only allow safe fields
-  const allowed = {
-    fullName: ALUMNI_COLS.FULLNAME,
-    batch: ALUMNI_COLS.BATCH,
-    department: ALUMNI_COLS.DEPARTMENT,
-    graduationYear: ALUMNI_COLS.GRADUATION_YEAR,
-    studentId: ALUMNI_COLS.STUDENT_ID,
-    phone: ALUMNI_COLS.PHONE,
-    profession: ALUMNI_COLS.PROFESSION,
-    organization: ALUMNI_COLS.ORGANIZATION,
-    city: ALUMNI_COLS.CITY,
-    linkedIn: ALUMNI_COLS.LINKEDIN,
-    website: ALUMNI_COLS.WEBSITE,
-    profilePhoto: ALUMNI_COLS.PROFILE_PHOTO,
-    bio: ALUMNI_COLS.BIO
-  };
-  const values = sheet.getRange(rowIdx, 1, 1, ALUMNI_COLS.UPDATED_AT).getValues()[0];
-  Object.keys(allowed).forEach(function(key) {
-    if (updates[key] !== undefined) values[allowed[key] - 1] = sanitize(updates[key]);
+    var sheet = getSheet(SHEETS.ALUMNI);
+    var rowIdx = found.index;
+    var now = new Date().toISOString();
+
+    var allowed = {
+      fullName: ALUMNI_COLS.FULLNAME,
+      batch: ALUMNI_COLS.BATCH,
+      department: ALUMNI_COLS.DEPARTMENT,
+      graduationYear: ALUMNI_COLS.GRADUATION_YEAR,
+      studentId: ALUMNI_COLS.STUDENT_ID,
+      phone: ALUMNI_COLS.PHONE,
+      profession: ALUMNI_COLS.PROFESSION,
+      organization: ALUMNI_COLS.ORGANIZATION,
+      city: ALUMNI_COLS.CITY,
+      linkedIn: ALUMNI_COLS.LINKEDIN,
+      website: ALUMNI_COLS.WEBSITE,
+      profilePhoto: ALUMNI_COLS.PROFILE_PHOTO,
+      bio: ALUMNI_COLS.BIO
+    };
+    var values = sheet.getRange(rowIdx, 1, 1, ALUMNI_COLS.GOOGLE_SUB).getValues()[0];
+    Object.keys(allowed).forEach(function(key) {
+      if (updates[key] !== undefined) values[allowed[key] - 1] = sanitize(updates[key]);
+    });
+    values[ALUMNI_COLS.UPDATED_AT - 1] = now;
+    if (!values[ALUMNI_COLS.GOOGLE_SUB - 1]) values[ALUMNI_COLS.GOOGLE_SUB - 1] = payload.sub;
+    sheet.getRange(rowIdx, 1, 1, values.length).setValues([values]);
+
+    return jsonResponse(true, "Profile updated successfully.", null);
   });
-  values[ALUMNI_COLS.UPDATED_AT - 1] = now;
-  sheet.getRange(rowIdx, 1, 1, values.length).setValues([values]);
-
-  return jsonResponse(true, "Profile updated successfully.", null);
 }
 
 function handleApproveAlumni(data) {
@@ -421,68 +652,141 @@ function handleReactivateAlumni(data) {
 }
 
 function updateAlumniStatus(data, newStatus) {
-  const adminEmail = sanitize(data.adminEmail);
-  const id = sanitize(data.id);
-  if (!checkIsAdmin(adminEmail)) return jsonResponse(false, "Unauthorized. Admin privileges required.", null, 403);
+  var payload;
+  try { payload = getVerifiedPayload(data); } catch (e) { return jsonResponse(false, e.message, null, 401); }
+  if (!checkIsAdmin(payload.email)) return jsonResponse(false, "Unauthorized. Admin privileges required.", null, 403);
+  var id = sanitize(data.id);
   if (!id) return jsonResponse(false, "Member ID is required.", null);
-  const found = findAlumniRowById(id);
-  if (!found) return jsonResponse(false, "Member not found.", null);
-  const sheet = getSheet(SHEETS.ALUMNI);
-  sheet.getRange(found.index, ALUMNI_COLS.STATUS).setValue(newStatus);
-  sheet.getRange(found.index, ALUMNI_COLS.UPDATED_AT).setValue(new Date().toISOString());
-  return jsonResponse(true, "Status updated to " + newStatus + ".", null);
+  return withSheetLock(function() {
+    var found = findAlumniRowById(id);
+    if (!found) return jsonResponse(false, "Member not found.", null);
+    var sheet = getSheet(SHEETS.ALUMNI);
+    sheet.getRange(found.index, ALUMNI_COLS.STATUS).setValue(newStatus);
+    sheet.getRange(found.index, ALUMNI_COLS.UPDATED_AT).setValue(new Date().toISOString());
+    return jsonResponse(true, "Status updated to " + newStatus + ".", null);
+  });
 }
 
 function handleCreateEvent(data) {
-  const adminEmail = sanitize(data.adminEmail);
-  if (!checkIsAdmin(adminEmail)) return jsonResponse(false, "Unauthorized.", null, 403);
-  let payload = {};
-  try { payload = typeof data.data === "string" ? JSON.parse(data.data) : (data.data || {}); } catch (e) { return jsonResponse(false, "Invalid data.", null); }
-  if (!sanitize(payload.title)) return jsonResponse(false, "Event title is required.", null);
-  if (!sanitize(payload.date)) return jsonResponse(false, "Event date is required.", null);
-  const sheet = getSheet(SHEETS.EVENTS);
-  const id = generateId("EVT");
-  const now = new Date().toISOString();
-  sheet.appendRow([id, sanitize(payload.title), sanitize(payload.date), sanitize(payload.time), sanitize(payload.location), sanitize(payload.description), sanitize(payload.image), sanitize(payload.registrationUrl), sanitize(payload.status) || "Upcoming", now]);
-  return jsonResponse(true, "Event created.", { id: id });
+  var payload;
+  try { payload = getVerifiedPayload(data); } catch (e) { return jsonResponse(false, e.message, null, 401); }
+  if (!checkIsAdmin(payload.email)) return jsonResponse(false, "Unauthorized.", null, 403);
+  var content = {};
+  try { content = typeof data.data === "string" ? JSON.parse(data.data) : (data.data || {}); } catch (e) { return jsonResponse(false, "Invalid data.", null); }
+  if (!sanitize(content.title)) return jsonResponse(false, "Event title is required.", null);
+  if (!sanitize(content.date)) return jsonResponse(false, "Event date is required.", null);
+  return withSheetLock(function() {
+    var sheet = getSheet(SHEETS.EVENTS);
+    var id = generateId("EVT");
+    var now = new Date().toISOString();
+    sheet.appendRow([id, sanitize(content.title), sanitize(content.date), sanitize(content.time), sanitize(content.location), sanitize(content.description), sanitize(content.image), sanitize(content.registrationUrl), sanitize(content.status) || "Upcoming", now]);
+    return jsonResponse(true, "Event created.", { id: id });
+  });
+}
+
+function handleUpdateEvent(data) {
+  var payload;
+  try { payload = getVerifiedPayload(data); } catch (e) { return jsonResponse(false, e.message, null, 401); }
+  if (!checkIsAdmin(payload.email)) return jsonResponse(false, "Unauthorized.", null, 403);
+  var id = sanitize(data.id);
+  if (!id) return jsonResponse(false, "Event ID is required.", null);
+  var content = {};
+  try { content = typeof data.data === "string" ? JSON.parse(data.data) : (data.data || {}); } catch (e) { return jsonResponse(false, "Invalid data.", null); }
+  return withSheetLock(function() {
+    var sheet = getSheet(SHEETS.EVENTS);
+    var values = sheet.getDataRange().getValues();
+    for (var i = 1; i < values.length; i++) {
+      if (String(values[i][0]).trim() === id) {
+        var row = values[i];
+        if (content.title !== undefined) row[1] = sanitize(content.title);
+        if (content.date !== undefined) row[2] = sanitize(content.date);
+        if (content.time !== undefined) row[3] = sanitize(content.time);
+        if (content.location !== undefined) row[4] = sanitize(content.location);
+        if (content.description !== undefined) row[5] = sanitize(content.description);
+        if (content.image !== undefined) row[6] = sanitize(content.image);
+        if (content.registrationUrl !== undefined) row[7] = sanitize(content.registrationUrl);
+        if (content.status !== undefined) row[8] = sanitize(content.status);
+        sheet.getRange(i + 1, 1, 1, row.length).setValues([row]);
+        return jsonResponse(true, "Event updated.", null);
+      }
+    }
+    return jsonResponse(false, "Event not found.", null);
+  });
 }
 
 function handleDeleteEvent(data) {
-  const adminEmail = sanitize(data.adminEmail);
-  if (!checkIsAdmin(adminEmail)) return jsonResponse(false, "Unauthorized.", null, 403);
-  const id = sanitize(data.id);
-  const sheet = getSheet(SHEETS.EVENTS);
-  const values = sheet.getDataRange().getValues();
-  for (let i = 1; i < values.length; i++) {
-    if (String(values[i][0]).trim() === id) { sheet.deleteRow(i + 1); return jsonResponse(true, "Event deleted.", null); }
-  }
-  return jsonResponse(false, "Event not found.", null);
+  var payload;
+  try { payload = getVerifiedPayload(data); } catch (e) { return jsonResponse(false, e.message, null, 401); }
+  if (!checkIsAdmin(payload.email)) return jsonResponse(false, "Unauthorized.", null, 403);
+  var id = sanitize(data.id);
+  return withSheetLock(function() {
+    var sheet = getSheet(SHEETS.EVENTS);
+    var values = sheet.getDataRange().getValues();
+    for (var i = 1; i < values.length; i++) {
+      if (String(values[i][0]).trim() === id) { sheet.deleteRow(i + 1); return jsonResponse(true, "Event deleted.", null); }
+    }
+    return jsonResponse(false, "Event not found.", null);
+  });
 }
 
 function handleCreateAnnouncement(data) {
-  const adminEmail = sanitize(data.adminEmail);
-  if (!checkIsAdmin(adminEmail)) return jsonResponse(false, "Unauthorized.", null, 403);
-  let payload = {};
-  try { payload = typeof data.data === "string" ? JSON.parse(data.data) : (data.data || {}); } catch (e) { return jsonResponse(false, "Invalid data.", null); }
-  if (!sanitize(payload.title)) return jsonResponse(false, "Title is required.", null);
-  if (!sanitize(payload.content)) return jsonResponse(false, "Content is required.", null);
-  const sheet = getSheet(SHEETS.ANNOUNCEMENTS);
-  const id = generateId("ANN");
-  const now = new Date().toISOString();
-  sheet.appendRow([id, sanitize(payload.title), sanitize(payload.content), sanitize(payload.date) || now.slice(0,10), sanitize(payload.author) || "Alumni Office", sanitize(payload.image), "Published", now]);
-  return jsonResponse(true, "Announcement created.", { id: id });
+  var payload;
+  try { payload = getVerifiedPayload(data); } catch (e) { return jsonResponse(false, e.message, null, 401); }
+  if (!checkIsAdmin(payload.email)) return jsonResponse(false, "Unauthorized.", null, 403);
+  var content = {};
+  try { content = typeof data.data === "string" ? JSON.parse(data.data) : (data.data || {}); } catch (e) { return jsonResponse(false, "Invalid data.", null); }
+  if (!sanitize(content.title)) return jsonResponse(false, "Title is required.", null);
+  if (!sanitize(content.content)) return jsonResponse(false, "Content is required.", null);
+  return withSheetLock(function() {
+    var sheet = getSheet(SHEETS.ANNOUNCEMENTS);
+    var id = generateId("ANN");
+    var now = new Date().toISOString();
+    sheet.appendRow([id, sanitize(content.title), sanitize(content.content), sanitize(content.date) || now.slice(0,10), sanitize(content.author) || "Alumni Office", sanitize(content.image), "Published", now]);
+    return jsonResponse(true, "Announcement created.", { id: id });
+  });
+}
+
+function handleUpdateAnnouncement(data) {
+  var payload;
+  try { payload = getVerifiedPayload(data); } catch (e) { return jsonResponse(false, e.message, null, 401); }
+  if (!checkIsAdmin(payload.email)) return jsonResponse(false, "Unauthorized.", null, 403);
+  var id = sanitize(data.id);
+  if (!id) return jsonResponse(false, "Announcement ID is required.", null);
+  var content = {};
+  try { content = typeof data.data === "string" ? JSON.parse(data.data) : (data.data || {}); } catch (e) { return jsonResponse(false, "Invalid data.", null); }
+  return withSheetLock(function() {
+    var sheet = getSheet(SHEETS.ANNOUNCEMENTS);
+    var values = sheet.getDataRange().getValues();
+    for (var i = 1; i < values.length; i++) {
+      if (String(values[i][0]).trim() === id) {
+        var row = values[i];
+        if (content.title !== undefined) row[1] = sanitize(content.title);
+        if (content.content !== undefined) row[2] = sanitize(content.content);
+        if (content.date !== undefined) row[3] = sanitize(content.date);
+        if (content.author !== undefined) row[4] = sanitize(content.author);
+        if (content.image !== undefined) row[5] = sanitize(content.image);
+        if (content.status !== undefined) row[6] = sanitize(content.status);
+        sheet.getRange(i + 1, 1, 1, row.length).setValues([row]);
+        return jsonResponse(true, "Announcement updated.", null);
+      }
+    }
+    return jsonResponse(false, "Announcement not found.", null);
+  });
 }
 
 function handleDeleteAnnouncement(data) {
-  const adminEmail = sanitize(data.adminEmail);
-  if (!checkIsAdmin(adminEmail)) return jsonResponse(false, "Unauthorized.", null, 403);
-  const id = sanitize(data.id);
-  const sheet = getSheet(SHEETS.ANNOUNCEMENTS);
-  const values = sheet.getDataRange().getValues();
-  for (let i = 1; i < values.length; i++) {
-    if (String(values[i][0]).trim() === id) { sheet.deleteRow(i + 1); return jsonResponse(true, "Announcement deleted.", null); }
-  }
-  return jsonResponse(false, "Announcement not found.", null);
+  var payload;
+  try { payload = getVerifiedPayload(data); } catch (e) { return jsonResponse(false, e.message, null, 401); }
+  if (!checkIsAdmin(payload.email)) return jsonResponse(false, "Unauthorized.", null, 403);
+  var id = sanitize(data.id);
+  return withSheetLock(function() {
+    var sheet = getSheet(SHEETS.ANNOUNCEMENTS);
+    var values = sheet.getDataRange().getValues();
+    for (var i = 1; i < values.length; i++) {
+      if (String(values[i][0]).trim() === id) { sheet.deleteRow(i + 1); return jsonResponse(true, "Announcement deleted.", null); }
+    }
+    return jsonResponse(false, "Announcement not found.", null);
+  });
 }
 
 function handleSubmitContact(data) {

@@ -1,8 +1,17 @@
 /**
- * Dashboard logic
+ * Dashboard logic - server-verified session, loading hint only until backend confirms
  */
 document.addEventListener("DOMContentLoaded", async () => {
-  const user = Auth.requireApproved();
+  // Fail-closed on production if config missing
+  if (typeof isProductionOrigin === "function" && isProductionOrigin() && (!isBackendConfigured() || !isGoogleConfigured())) {
+    document.body.innerHTML = '<div class="container" style="padding:48px 24px"><div class="alert alert-danger">Service not configured. Please contact the administrator.</div></div>';
+    return;
+  }
+
+  // Treat sessionStorage as loading hint only — backend must confirm Approved
+  const verifiedData = await Auth.requireVerifiedApproved();
+  if (!verifiedData) return;
+  const user = Auth.getUser();
   if (!user) return;
 
   // Welcome

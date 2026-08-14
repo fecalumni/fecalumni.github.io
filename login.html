@@ -37,17 +37,6 @@
     <div id="gsi-button" class="gsi-wrap"></div>
     <p class="gsi-note text-center">By signing in, you agree to the alumni association terms. Only FEC graduates may register.</p>
 
-    <div id="demo-login" style="margin-top:18px;display:none">
-      <div class="auth-divider">Demo Access</div>
-      <p style="font-size:13px;color:var(--color-text-muted);text-align:center;margin-bottom:12px">Backend not configured — use demo access to preview the portal.</p>
-      <div style="display:flex;gap:10px">
-        <button class="btn btn-primary btn-block" id="btn-demo-approved">Enter as Approved Alumni</button>
-      </div>
-      <div style="display:flex;gap:10px;margin-top:10px">
-        <button class="btn btn-outline btn-block" id="btn-demo-pending">Preview Pending State</button>
-      </div>
-    </div>
-
     <div class="auth-footer">New to the association? Signing in will guide you to registration.</div>
   </div>
 </main>
@@ -83,25 +72,9 @@ document.addEventListener("DOMContentLoaded", () => {
   function tryInit() {
     if (typeof google !== "undefined" && google.accounts) {
       Auth.initGoogleButton("gsi-button", Auth.handlePostGoogleSignIn);
-      // Demo fallback visibility
-      if (!isGoogleConfigured() || !isBackendConfigured()) {
-        document.getElementById("demo-login").style.display = "block";
-      }
     } else setTimeout(tryInit, 300);
   }
   tryInit();
-  setTimeout(() => {
-    if (!isGoogleConfigured() || !isBackendConfigured()) document.getElementById("demo-login").style.display = "block";
-  }, 1200);
-
-  document.getElementById("btn-demo-approved")?.addEventListener("click", () => {
-    Auth.saveUser({ email: "demo.alumni@fec.edu.bd", name: "Demo Alumni", picture: "", status: "Approved", role: "Alumni" }, "demo-token");
-    location.href = "dashboard.html";
-  });
-  document.getElementById("btn-demo-pending")?.addEventListener("click", () => {
-    Auth.saveUser({ email: "pending.demo@fec.edu.bd", name: "Pending Applicant", picture: "", status: "Pending", role: "Alumni" }, "demo-token");
-    location.href = "login.html?reason=Pending";
-  });
 });
 </script>
 </body>

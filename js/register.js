@@ -109,8 +109,8 @@ function validateRegistration(d) {
   if (!d.profession || d.profession.length < 2) e.profession = "Profession is required.";
   if (!d.organization || d.organization.length < 2) e.organization = "Organization is required.";
   if (!d.city || d.city.length < 2) e.city = "City is required.";
-  if (d.linkedIn && d.linkedIn.trim() && !/^https?:\/\/.+/.test(d.linkedIn.trim())) e.linkedIn = "LinkedIn must be a valid URL starting with https://";
-  if (d.website && d.website.trim() && !/^https?:\/\/.+/.test(d.website.trim())) e.website = "Website must be a valid URL starting with https://";
-  if (d.profilePhoto && d.profilePhoto.trim() && !/^https?:\/\/.+/.test(d.profilePhoto.trim())) e.profilePhoto = "Profile photo must be a valid URL.";
+  if (d.linkedIn && d.linkedIn.trim() && !isSafeHttpsUrl(d.linkedIn.trim())) e.linkedIn = "LinkedIn must be a valid HTTPS URL (https://).";
+  if (d.website && d.website.trim() && !isSafeHttpsUrl(d.website.trim())) e.website = "Website must be a valid HTTPS URL (https://).";
+  if (d.profilePhoto && d.profilePhoto.trim() && !isSafeHttpsUrl(d.profilePhoto.trim())) e.profilePhoto = "Profile photo must be a valid HTTPS URL (https://).";
   return e;
 }

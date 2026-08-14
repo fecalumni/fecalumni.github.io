@@ -2,27 +2,44 @@
  * Admin dashboard logic
  */
 document.addEventListener("DOMContentLoaded", async () => {
-  const user = Auth.requireAuth();
-  if (!user) return;
+  if (typeof isProductionOrigin === "function" && isProductionOrigin() && (!isBackendConfigured() || !isGoogleConfigured())) {
+    document.body.innerHTML = '<div class="container" style="padding:48px 24px"><div class="alert alert-danger">Service not configured. Please contact the administrator.</div></div>';
+    return;
+  }
+  const token = Auth.getToken();
+  const hintUser = Auth.getUser();
+  if (!token || !hintUser) { window.location.href = "login.html"; return; }
+
   const feedback = document.getElementById("admin-feedback");
   const statsWrap = document.getElementById("admin-stats");
   const pendingWrap = document.getElementById("admin-pending");
   const alumniWrap = document.getElementById("admin-alumni-table");
 
-  // Verify admin
-  if (isBackendConfigured()) {
-    try {
-      const r = await Api.isAdmin(user.email);
-      if (!r.data?.isAdmin) {
-        document.body.innerHTML = '<div class="container" style="padding:48px 24px"><div class="alert alert-danger">You are not authorized to access this page. Admin privileges required.</div><p style="margin-top:12px"><a class="btn btn-outline" href="index.html">Back to Home</a></p></div>';
-        return;
-      }
-    } catch (err) {
-      feedback.innerHTML = `<div class="alert alert-danger">${escapeHtml(err.message||"Authorization check failed.")}</div>`;
-      return;
-    }
-  } else {
-    // Demo mode notice
+  // Hide admin shell until server confirms, show loading
+  var adminShell = document.querySelector(".admin-layout");
+  var loadingWrap = null;
+  if (adminShell) {
+    adminShell.style.display = "none";
+    loadingWrap = document.createElement("div");
+    loadingWrap.className = "loading-wrap";
+    loadingWrap.innerHTML = '<span class="spinner spinner-lg"></span> Verifying administrator access...';
+    loadingWrap.style.padding = "48px 24px";
+    adminShell.parentNode.insertBefore(loadingWrap, adminShell);
+  }
+
+  // Server-verified admin check — never trusts client adminEmail
+  var adminOk = await Auth.requireVerifiedAdmin();
+  if (!adminOk) {
+    if (loadingWrap) loadingWrap.remove();
+    return;
+  }
+  if (loadingWrap) loadingWrap.remove();
+  if (adminShell) adminShell.style.display = "";
+
+  const user = hintUser;
+
+  // Show warning only on local dev when backend not configured (production already fail-closed above)
+  if (!isBackendConfigured() && !isProductionOrigin()) {
     feedback.innerHTML = '<div class="alert alert-warning">Admin backend not configured. Showing demo data. Configure <code>CONFIG.API_URL</code> and the <code>Admins</code> sheet to enable real administration.</div>';
   }
 

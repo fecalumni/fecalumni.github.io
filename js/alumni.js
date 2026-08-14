@@ -1,8 +1,14 @@
 /**
- * Alumni directory logic
+ * Alumni directory logic - server-verified, no token in URL
  */
 document.addEventListener("DOMContentLoaded", async () => {
-  const user = Auth.requireApproved();
+  if (typeof isProductionOrigin === "function" && isProductionOrigin() && (!isBackendConfigured() || !isGoogleConfigured())) {
+    document.body.innerHTML = '<div class="container" style="padding:48px 24px"><div class="alert alert-danger">Service not configured. Please contact the administrator.</div></div>';
+    return;
+  }
+  const verified = await Auth.requireVerifiedApproved();
+  if (!verified) return;
+  const user = Auth.getUser();
   if (!user) return;
   const grid = document.getElementById("alumni-grid");
   const searchInput = document.getElementById("alumni-search");
@@ -95,9 +101,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function cardHtml(a) {
-    const hasPhoto = a.profilePhoto && /^https?:\/\//.test(a.profilePhoto);
+    const hasPhoto = isSafeHttpsUrl(a.profilePhoto);
     const avatar = hasPhoto ? `<img src="${escapeHtml(a.profilePhoto)}" alt="${escapeHtml(a.fullName)}" loading="lazy">` : escapeHtml(initials(a.fullName));
-    const linkedInBtn = a.linkedIn ? `<a class="btn btn-outline btn-sm" href="${escapeHtml(a.linkedIn)}" target="_blank" rel="noopener">View LinkedIn</a>` : "";
+    const linkedInBtn = isSafeHttpsUrl(a.linkedIn) ? `<a class="btn btn-outline btn-sm" href="${escapeHtml(a.linkedIn)}" target="_blank" rel="noopener">View LinkedIn</a>` : "";
     return `
       <div class="alumni-card">
         <div class="alumni-card-top">
